@@ -73,6 +73,8 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .filter-bar select:focus,.filter-bar input:focus{border-color:var(--primary)}
 .filter-bar .filter-label{font-size:13px;color:var(--text-secondary);white-space:nowrap}
 .filter-bar .filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.filter-bar .filter-spacer{flex:1;min-width:8px}
+.filter-bar .filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
 .checkbox-group{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-secondary)}
 .checkbox-group label{display:flex;align-items:center;gap:4px;cursor:pointer}
 .checkbox-group input[type="checkbox"]{accent-color:var(--primary);width:14px;height:14px}
@@ -118,6 +120,19 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .level-filter-opt{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap}
 .level-filter-opt:hover{background:var(--primary-light)}
 .level-filter-opt input{cursor:pointer}
+
+/* 表头可排序 */
+.data-table th.sortable{cursor:pointer;user-select:none}
+.data-table th.sortable:hover{color:var(--primary)}
+.data-table th .sort-arrow{display:inline-block;font-size:10px;color:var(--text-hint);margin-left:2px;letter-spacing:-1px}
+.data-table th.sort-asc .sort-arrow,.data-table th.sort-desc .sort-arrow{color:var(--primary);font-weight:700}
+
+/* 倡议列表表格 */
+.init-list-table .init-cover-thumb{width:40px;height:40px;border-radius:var(--radius);flex-shrink:0;background-size:cover;background-position:center}
+.init-list-table .init-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4}
+.init-list-table .init-type-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap}
+.init-list-table .init-type-unified{color:#1890FF;background:#E6F7FF;border-color:#91D5FF}
+.init-list-table .init-type-custom{color:#FA8C16;background:#FFF7E6;border-color:#FFD591}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .stat-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}

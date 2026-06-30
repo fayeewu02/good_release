@@ -39,15 +39,6 @@
   </aside>
 
   <div class="main">
-    <div class="content-header">
-      <div class="breadcrumb"><span id="breadcrumbPage">体系管理</span></div>
-      <div class="header-actions" id="headerActions">
-        <button class="btn" onclick="openImportOrgModal()">批量导入</button>
-        <button class="btn" onclick="openExportOrgModal()">批量导出</button>
-        <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
-      </div>
-    </div>
-
     <div class="content">
       <!-- ============ 体系管理 ============ -->
       <div class="page active" id="page-org">
@@ -74,6 +65,12 @@
               <label class="level-filter-opt"><input type="checkbox" value="4" onchange="applyLevelFilter()"> 四级组织</label>
               <label class="level-filter-opt"><input type="checkbox" value="5" onchange="applyLevelFilter()"> 五级组织</label>
             </div>
+          </div>
+          <div class="filter-spacer"></div>
+          <div class="filter-actions">
+            <button class="btn" onclick="openImportOrgModal()">批量导入</button>
+            <button class="btn" onclick="openExportOrgModal()">批量导出</button>
+            <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
           </div>
         </div>
         <div class="panel">
@@ -113,28 +110,22 @@
       <div class="page" id="page-initiative">
         <!-- 主Tab切换 -->
         <div class="tabs" id="initMainTabs">
-          <div class="tab active" data-inittab="unified" onclick="switchInitMainTab('unified')">统一倡议管理</div>
-          <div class="tab" data-inittab="invite" onclick="switchInitMainTab('invite')">邀请下级发起管理</div>
+          <div class="tab active" data-inittab="unified" onclick="switchInitMainTab('unified')">倡议管理</div>
+          <div class="tab" data-inittab="orgdata" onclick="switchInitMainTab('orgdata')">组织发起数据</div>
+          <div class="tab" data-inittab="invite" onclick="switchInitMainTab('invite')" style="display:none">邀请下级发起管理</div>
         </div>
 
-        <!-- ===== Tab1：统一倡议管理（有固定主题，所有倡议共用同一主题内容） ===== -->
+        <!-- ===== Tab1：倡议管理 ===== -->
         <div class="init-main-panel" id="initPanel-unified">
-          <!-- 操作按钮区：移到筛选器上方 -->
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
-            <button class="btn btn-primary" onclick="openInviteModal()">📨 批量邀请下级发起倡议</button>
-            <button class="btn" onclick="openModal('exportQRModal')">批量导出倡议</button>
-            <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
-          </div>
           <div class="filter-bar">
-            <div style="display:flex;align-items:center;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
               <span class="filter-label">发布时间</span>
               <input type="date" id="initDateFrom" value="2026-06-01">
               <span style="color:var(--text-hint)">至</span>
               <input type="date" id="initDateTo" value="2026-06-30">
               <div class="filter-sep"></div>
-              <span class="filter-label">主题：</span>
-              <input type="text" id="initSearch" placeholder="搜索倡议主题..." style="width:160px">
+              <span class="filter-label">内容：</span>
+              <input type="text" id="initSearch" placeholder="搜索倡议内容..." style="width:160px" oninput="renderInitiatives()">
               <div class="filter-sep"></div>
               <span class="filter-label">发起组织：</span>
               <div style="position:relative;display:inline-block">
@@ -142,16 +133,84 @@
                 <input type="hidden" id="initOrgFilter" value="">
                 <div id="initOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
               </div>
+              <div class="filter-sep"></div>
+              <span class="filter-label">倡议类型：</span>
+              <select id="initTypeFilter" onchange="renderInitiatives()" style="width:150px">
+                <option value="">全部类型</option>
+                <option value="unified">统一倡议</option>
+                <option value="custom">下级自定义倡议</option>
+              </select>
+            </div>
+            <div class="filter-spacer"></div>
+            <div class="filter-actions">
+              <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
+              <button class="btn" onclick="openModal('exportQRModal')">批量导出倡议</button>
+              <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
             </div>
           </div>
           <div class="draft-panel" id="draftPanel"><div class="draft-list"></div></div>
-          <div class="initiative-grid" id="initGrid"></div>
+          <!-- 倡议列表（表格） -->
+          <div class="panel">
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table init-list-table">
+                <thead>
+                  <tr>
+                    <th style="width:48px"></th>
+                    <th>倡议内容</th>
+                    <th style="width:110px">倡议类型</th>
+                    <th style="width:100px">活动地址</th>
+                    <th style="width:90px" onclick="sortInitList('orgCount')" class="sortable">组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
+                    <th style="width:90px" onclick="sortInitList('postCount')" class="sortable">发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
+                    <th style="width:90px">待审核</th>
+                    <th style="width:110px">创建时间</th>
+                    <th style="width:120px">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="initListBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <!-- ===== Tab2：邀请下级发起管理（无固定主题，主题由下级自行填写，上级统一管理） ===== -->
+        <!-- ===== Tab2：组织发起数据 ===== -->
+        <div class="init-main-panel" id="initPanel-orgdata" style="display:none">
+          <div class="filter-bar">
+            <span class="filter-label">组织/负责人：</span>
+            <input type="text" id="orgDataSearch" placeholder="输入组织名称或负责人，支持模糊搜索" style="width:240px" oninput="renderOrgDataTable()">
+            <div class="filter-sep"></div>
+            <span class="filter-label">层级</span>
+            <select id="orgDataLevelFilter" onchange="renderOrgDataTable()" style="width:140px">
+              <option value="">全部层级</option>
+              <option value="1">一级组织</option>
+              <option value="2">二级组织</option>
+              <option value="3">三级组织</option>
+              <option value="4">四级组织</option>
+              <option value="5">五级组织</option>
+            </select>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3 id="orgDataCount">共 0 个组织</h3></div>
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>组织名称</th>
+                    <th style="width:80px">层级</th>
+                    <th>上级组织</th>
+                    <th style="width:120px" onclick="sortOrgData('initCount')" class="sortable">发起倡议数 <span class="sort-arrow" data-key="initCount">⇅</span></th>
+                    <th style="width:110px" onclick="sortOrgData('memberCount')" class="sortable">参与人数 <span class="sort-arrow" data-key="memberCount">⇅</span></th>
+                    <th style="width:130px" onclick="sortOrgData('postCount')" class="sortable">发布好事数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
+                  </tr>
+                </thead>
+                <tbody id="orgDataTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Tab3：邀请下级发起管理（保留功能，UI 隐藏入口） ===== -->
         <div class="init-main-panel" id="initPanel-invite" style="display:none">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <button class="btn btn-primary" onclick="openInviteModal()">📨 批量邀请下级发起倡议</button>
             <button class="btn" onclick="exportAllInviteQR()">批量导出邀请二维码</button>
           </div>
           <div style="background:#E6F4FF;border:1px solid #91CAFF;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1677FF;line-height:1.6">
@@ -478,62 +537,49 @@
     <form id="createInitForm" onsubmit="event.preventDefault();submitCreateInit()">
     <input type="hidden" id="createInitEditId">
     <div class="modal-body">
-      <div class="form-group"><label>倡议主题 <span class="required">*</span></label><input type="text" id="createInitTitle" placeholder="请输入倡议主题" required></div>
-      <div class="form-group"><label>封面图 <span class="required">*</span></label>
-        <div class="upload-area" id="coverPreview">点击上传<input type="file" accept="image/*" onchange="handleCoverUpload(this)"></div>
-      </div>
-      <div class="form-group"><label>活动地点</label><input type="text" id="createInitLocation" placeholder="请输入活动地点（选填）"></div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <label style="font-size:13px;font-weight:500">批量发起倡议</label>
+      <!-- 批量发起开关：置顶 -->
+      <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;background:#FAFAFA;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;margin-bottom:0">批量发起倡议（向多个组织一次性发起）</label>
         <label class="switch"><input type="checkbox" id="batchSwitch" onchange="toggleBatchOrg()"><span class="slider"></span></label>
       </div>
-      <div id="batchOrgSection" style="display:none">
+
+      <!-- 下级自定义倡议开关：仅批量开启时出现 -->
+      <div class="form-group" id="customByChildSection" style="display:none;align-items:center;justify-content:space-between;background:#FFF7E6;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
+        <div>
+          <label style="font-size:13px;font-weight:500;margin-bottom:0;display:block">由下级组织自定义倡议内容</label>
+          <p style="font-size:11px;color:var(--text-hint);margin-top:3px;line-height:1.5">打开后无需填写统一的倡议内容和地址，由下级自行决定。</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="customByChildSwitch" onchange="toggleCustomByChild()"><span class="slider"></span></label>
+      </div>
+
+      <!-- A: 统一倡议（默认）— 倡议内容 + 活动地址 -->
+      <div id="unifiedContentBlock">
+        <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="createInitTitle" placeholder="请输入倡议内容"></div>
+        <div class="form-group"><label>活动地址</label><input type="text" id="createInitLocation" placeholder="请输入活动地址（选填）"></div>
+        <!-- 批量勾选层级：仅在批量发起开启时展示 -->
+        <div id="batchOrgSection" style="display:none">
+          <div class="form-group"><label>选择发起组织</label>
+            <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+              <select id="batchLayerFilter" onchange="filterBatchOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
+              <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="batchSelectAllCb" onchange="toggleAllBatchOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+            </div>
+            <div class="org-selector" id="batchOrgList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B: 下级自定义 — 仅备注 + 层级勾选 -->
+      <div id="customByChildBlock" style="display:none">
+        <div class="form-group">
+          <label>备注 <span style="font-weight:400;color:var(--text-hint);font-size:12px">（仅方便本级管理，非倡议内容）</span></label>
+          <input type="text" id="createInitRemark" placeholder="请输入备注">
+        </div>
         <div class="form-group"><label>选择发起组织</label>
           <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-            <select id="batchLayerFilter" onchange="filterBatchOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
-            <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="batchSelectAllCb" onchange="toggleAllBatchOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+            <select id="customLayerFilter" onchange="filterCustomOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
+            <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="customSelectAllCb" onchange="toggleAllCustomOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
           </div>
-          <div class="org-selector" id="batchOrgList"></div>
-        </div>
-        <!-- 上传活动地点 Excel -->
-        <div class="form-group" style="margin-top:4px">
-          <div class="batch-location-upload" id="batchLocationUpload">
-            <div class="batch-location-header" onclick="toggleBatchLocationPanel()">
-              <div style="display:flex;align-items:center;gap:6px">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 1C4.68 1 2 3.68 2 7c0 4.5 6 8 6 8s6-3.5 6-8c0-3.32-2.68-6-6-6zm0 8.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" fill="#1890FF"/></svg>
-                <span style="font-size:13px;font-weight:500;color:var(--text-primary)">配置不同组织的活动地点</span>
-              </div>
-              <span class="batch-location-arrow" id="batchLocationArrow">▸</span>
-            </div>
-            <div class="batch-location-body" id="batchLocationBody" style="display:none">
-              <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;line-height:1.6">
-                如需给每个组织配置不同的活动地点，可上传包含地点信息的 Excel 文件。<br>
-                Excel 需包含以下字段：<strong>发起组织</strong>、<strong>活动地点</strong>
-              </p>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                <a class="btn-link" onclick="downloadBatchLocationTemplate()" style="font-size:12px">📥 下载模板</a>
-              </div>
-              <div class="batch-location-dropzone" id="batchLocationDropzone">
-                <div id="batchLocationPlaceholder">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-bottom:4px"><path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="#BFBFBF"/></svg>
-                  <p style="font-size:12px;color:var(--text-hint);margin:0">点击或拖拽上传 Excel 文件</p>
-                </div>
-                <div id="batchLocationFileInfo" style="display:none">
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:20px">📄</span>
-                    <div style="flex:1;min-width:0">
-                      <p style="font-size:12px;font-weight:500;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="batchLocationFileName"></p>
-                      <p style="font-size:11px;color:var(--text-hint);margin:2px 0 0" id="batchLocationFileSize"></p>
-                    </div>
-                    <button type="button" class="btn btn-sm" style="padding:2px 8px;font-size:11px;color:#E84C3D;border-color:#E84C3D" onclick="removeBatchLocationFile(event)">移除</button>
-                  </div>
-                </div>
-                <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" id="batchLocationFileInput" onchange="handleBatchLocationFile(this)">
-              </div>
-              <div id="batchLocationPreview" style="display:none"></div>
-            </div>
-          </div>
+          <div class="org-selector" id="customOrgList"></div>
         </div>
       </div>
     </div>
@@ -562,11 +608,8 @@
     <div class="edit-init-tab-panel active" id="editInitTabBasic">
       <form id="editInitForm" onsubmit="event.preventDefault();submitEditInit()">
       <div class="modal-body">
-        <div class="form-group"><label>倡议主题 <span class="required">*</span></label><input type="text" id="editInitTitle" placeholder="请输入倡议主题" required></div>
-        <div class="form-group"><label>封面图 <span class="required">*</span></label>
-          <div class="upload-area" id="editCoverPreview">点击上传<input type="file" accept="image/*" onchange="handleEditCoverUpload(this)"></div>
-        </div>
-        <div class="form-group"><label>活动地点（默认）</label><input type="text" id="editInitLocation" placeholder="请输入活动地点（选填，各组织可单独配置）"></div>
+        <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="editInitTitle" placeholder="请输入倡议内容" required></div>
+        <div class="form-group"><label>活动地址（默认）</label><input type="text" id="editInitLocation" placeholder="请输入活动地址（选填，各组织可单独配置）"></div>
       </div>
       <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editInitModal')">取消</button><button type="submit" class="btn btn-primary">确认修改</button></div>
       </form>
@@ -1038,6 +1081,7 @@ const _origOpenCreateInitModal = openCreateInitModal;
 openCreateInitModal = function() {
   _origOpenCreateInitModal();
   initBatchOrgList();
+  if (typeof initCustomOrgList === 'function') initCustomOrgList();
 };
 // 初始化导出预览
 document.addEventListener('DOMContentLoaded', () => {

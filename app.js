@@ -19,15 +19,16 @@ const DATA = {
   ],
   nextOrgId: 15,
   initiatives: [
-    {id:1,title:'社区清洁日',desc:'号召社区居民一起打扫公共区域，美化社区环境。拍照记录你的清洁行动！',color:'linear-gradient(135deg,#06B57A,#34D399)',orgCount:25,postCount:5234,createDate:'2026-06-10',isDraft:false},
-    {id:2,title:'关爱独居老人',desc:'探访社区独居老人，陪伴聊天、帮助采购。用镜头记录温暖瞬间。',color:'linear-gradient(135deg,#FF8C42,#FBBF24)',orgCount:18,postCount:3890,createDate:'2026-06-05',isDraft:false},
-    {id:3,title:'绿色出行周',desc:'本周选择步行、骑行或公共交通出行，减少碳排放。分享你的绿色出行方式！',color:'linear-gradient(135deg,#4A90D9,#60A5FA)',orgCount:20,postCount:2100,createDate:'2026-06-15',isDraft:false},
-    {id:4,title:'节水行动周',desc:'记录每天的节水小妙招，倡导绿色生活方式，从身边做起。',color:'linear-gradient(135deg,#1ABC9C,#16A085)',orgCount:15,postCount:1560,createDate:'2026-06-18',isDraft:false},
-    {id:5,title:'邻里互助日',desc:'帮助邻居解决生活中的小困难，分享温暖瞬间。',color:'linear-gradient(135deg,#E74C3C,#C0392B)',orgCount:22,postCount:2890,createDate:'2026-06-12',isDraft:false},
+    {id:1,title:'社区清洁日',desc:'号召社区居民一起打扫公共区域，美化社区环境。拍照记录你的清洁行动！',color:'linear-gradient(135deg,#06B57A,#34D399)',orgCount:25,postCount:5234,createDate:'2026-06-10',isDraft:false,customByChild:false,location:'上海市浦东新区',remark:''},
+    {id:2,title:'关爱独居老人',desc:'探访社区独居老人，陪伴聊天、帮助采购。用镜头记录温暖瞬间。',color:'linear-gradient(135deg,#FF8C42,#FBBF24)',orgCount:18,postCount:3890,createDate:'2026-06-05',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:3,title:'绿色出行周',desc:'本周选择步行、骑行或公共交通出行，减少碳排放。分享你的绿色出行方式！',color:'linear-gradient(135deg,#4A90D9,#60A5FA)',orgCount:20,postCount:2100,createDate:'2026-06-15',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:4,title:'节水行动周',desc:'记录每天的节水小妙招，倡导绿色生活方式，从身边做起。',color:'linear-gradient(135deg,#1ABC9C,#16A085)',orgCount:15,postCount:1560,createDate:'2026-06-18',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:5,title:'邻里互助日',desc:'帮助邻居解决生活中的小困难，分享温暖瞬间。',color:'linear-gradient(135deg,#E74C3C,#C0392B)',orgCount:22,postCount:2890,createDate:'2026-06-12',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:8,title:'0628自定义倡议',desc:'',color:'linear-gradient(135deg,#FAAD14,#FFC53D)',orgCount:6,postCount:312,createDate:'2026-06-28',isDraft:false,customByChild:true,location:'',remark:'0628自定义倡议'},
     {id:6,title:'旧衣回收计划',desc:'将闲置的旧衣服整理出来，捐给需要的人。',color:'linear-gradient(135deg,#9B59B6,#8E44AD)',orgCount:0,postCount:0,createDate:'2026-06-20',isDraft:true},
     {id:7,title:'社区读书会',desc:'每周组织一次社区读书分享活动。',color:'linear-gradient(135deg,#E67E22,#F39C12)',orgCount:0,postCount:0,createDate:'2026-06-22',isDraft:true}
   ],
-  nextInitId: 8,
+  nextInitId: 9,
   // 邀请下级发起记录（无统一主题，主题由下级自行填写）
   invitations: [
     {id:1, levelScope:'all2', scopeText:'全部二级组织', inviteOrgs:['华东分会','华南分会','华北分会'], createDate:'2026-06-18', status:'进行中',
@@ -144,25 +145,13 @@ function switchPage(id, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('page-' + id).classList.add('active');
-  const titles = {org:'体系管理',initiative:'好事发布器','data-center':'数据中心',quanmu:'劝募大使'};
-  document.getElementById('breadcrumbPage').textContent = titles[id] || id;
-  updateHeaderActions(id);
   if (id === 'org') renderOrgTable();
   if (id === 'initiative') renderInitiatives();
   if (id === 'data-center') setTimeout(initCharts, 100);
   if (id === 'quanmu') {} // 占位
 }
 
-function updateHeaderActions(id) {
-  const ha = document.getElementById('headerActions');
-  if (id === 'org') {
-    ha.innerHTML = `<button class="btn" onclick="openModal('importOrgModal')">批量导入</button><button class="btn" onclick="exportOrgTable()">批量导出</button><button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>`;
-  } else if (id === 'initiative') {
-    ha.innerHTML = '';
-  } else {
-    ha.innerHTML = '';
-  }
-}
+function updateHeaderActions(_id) { /* no-op: 已移除内容头 */ }
 
 // ========================
 // 分享组织二维码
@@ -768,16 +757,12 @@ function switchToMember(orgId, orgName) {
   DATA.currentMemberOrg = orgId;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-member').classList.add('active');
-  document.getElementById('breadcrumbPage').textContent = '体系管理 / ' + orgName + ' · 成员管理';
-  document.getElementById('memberOrgTitle').textContent = orgName + ' · 成员管理';
-  document.getElementById('headerActions').innerHTML = '';
+  const t = document.getElementById('memberOrgTitle'); if (t) t.textContent = orgName + ' · 成员管理';
   renderMembers();
 }
 function backToOrg() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-org').classList.add('active');
-  document.getElementById('breadcrumbPage').textContent = '体系管理';
-  updateHeaderActions('org');
   renderOrgTable();
 }
 function renderMembers() {
@@ -842,22 +827,26 @@ function submitEditMember() {
 // ========================
 // 好事发布器（倡议管理）
 // ========================
+let initListSort = { key: 'createDate', asc: false }; // 默认按创建时间倒序
+
 function getFilteredInitiatives() {
   const dateFrom = document.getElementById('initDateFrom')?.value || '';
   const dateTo = document.getElementById('initDateTo')?.value || '';
   const search = document.getElementById('initSearch')?.value?.toLowerCase() || '';
   const orgFilter = document.getElementById('initOrgFilter')?.value || '';
+  const typeFilter = document.getElementById('initTypeFilter')?.value || '';
   return DATA.initiatives.filter(i => {
     if (i.isDraft) return false;
     if (dateFrom && i.createDate < dateFrom) return false;
     if (dateTo && i.createDate > dateTo) return false;
-    if (search && !i.title.toLowerCase().includes(search) && !(i.desc||'').toLowerCase().includes(search)) return false;
+    if (search && !i.title.toLowerCase().includes(search) && !(i.desc||'').toLowerCase().includes(search) && !(i.remark||'').toLowerCase().includes(search)) return false;
     if (orgFilter) {
-      // 根据帖子中关联的组织来筛选
       const initPosts = DATA.posts.filter(p => p.initId === i.id);
       const initOrgs = new Set(initPosts.map(p => p.org));
       if (!initOrgs.has(orgFilter)) return false;
     }
+    if (typeFilter === 'unified' && i.customByChild) return false;
+    if (typeFilter === 'custom' && !i.customByChild) return false;
     return true;
   });
 }
@@ -896,29 +885,67 @@ function selectInitOrg(value, display) {
 
 function renderInitiatives() {
   const filtered = getFilteredInitiatives();
-  const grid = document.getElementById('initGrid');
-  if (!grid) return;
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><p>没有找到匹配的倡议</p></div>`;
+  const tbody = document.getElementById('initListBody');
+  if (!tbody) return;
+  // 排序
+  const { key, asc } = initListSort;
+  const sorted = [...filtered].sort((a, b) => {
+    const va = a[key] ?? 0, vb = b[key] ?? 0;
+    if (va === vb) return 0;
+    return (va > vb ? 1 : -1) * (asc ? 1 : -1);
+  });
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-hint)">没有找到匹配的倡议</td></tr>`;
   } else {
-    grid.innerHTML = filtered.map(i => {
+    tbody.innerHTML = sorted.map(i => {
       const pendingCount = DATA.posts.filter(p => p.initId === i.id && p.status === 'pending').length;
+      const isCustom = !!i.customByChild;
+      const typeTag = isCustom
+        ? '<span class="init-type-tag init-type-custom">下级自定义</span>'
+        : '<span class="init-type-tag init-type-unified">统一倡议</span>';
+      const titleText = isCustom ? (i.remark || i.title || '下级自定义倡议') : i.title;
+      const locationText = isCustom ? '—' : (i.location || '不限');
       return `
-      <div class="init-card" onclick="switchToTopic(${i.id})">
-        <div class="cover" style="background:${i.color};position:relative">
-        </div>
-        <div class="body">
-          <h4>${i.title}</h4>
-          <div class="desc">${i.location ? '📍 ' + i.location : (i.desc || '不限活动地点')}</div>
-          <div class="foot"><div class="metrics"><span>${i.orgCount}个组织</span><span>${i.postCount.toLocaleString()}条</span>${pendingCount > 0 ? `<span class="pending-text-badge">${pendingCount}条待审核</span>` : ''}</div><a class="btn-link" onclick="event.stopPropagation();openEditInitModal(${i.id})" style="font-size:12px">编辑</a></div>
-        </div>
-      </div>`;
+      <tr style="cursor:pointer" onclick="switchToTopic(${i.id})">
+        <td><div class="init-cover-thumb" style="background:${i.color}"></div></td>
+        <td>
+          <div class="init-title">${titleText}</div>
+          ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
+        </td>
+        <td>${typeTag}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${locationText}</td>
+        <td>${i.orgCount}</td>
+        <td>${i.postCount.toLocaleString()}</td>
+        <td>${pendingCount > 0 ? `<span class="pending-text-badge">${pendingCount}</span>` : '<span style="color:var(--text-hint)">—</span>'}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${i.createDate}</td>
+        <td class="actions-cell" onclick="event.stopPropagation()">
+          <a class="btn-link" onclick="switchToTopic(${i.id})">查看</a>
+          <a class="btn-link" onclick="openEditInitModal(${i.id})">编辑</a>
+        </td>
+      </tr>`;
     }).join('');
   }
+  // 更新排序箭头
+  document.querySelectorAll('.init-list-table th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow && arrow.dataset.key === key) {
+      th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+      arrow.textContent = asc ? '↑' : '↓';
+    } else if (arrow) {
+      arrow.textContent = '⇅';
+    }
+  });
   renderDrafts();
 }
 
-/* ============ 好事发布器双Tab：统一倡议管理 / 邀请下级发起管理 ============ */
+function sortInitList(key) {
+  if (initListSort.key === key) initListSort.asc = !initListSort.asc;
+  else { initListSort.key = key; initListSort.asc = false; }
+  renderInitiatives();
+}
+
+/* ============ 好事发布器双Tab：倡议管理 / 组织发起数据 / 邀请下级发起管理 ============ */
 let currentInitMainTab = 'unified';
 function switchInitMainTab(tab) {
   currentInitMainTab = tab;
@@ -926,10 +953,79 @@ function switchInitMainTab(tab) {
     t.classList.toggle('active', t.dataset.inittab === tab);
   });
   const unified = document.getElementById('initPanel-unified');
+  const orgdata = document.getElementById('initPanel-orgdata');
   const invite = document.getElementById('initPanel-invite');
   if (unified) unified.style.display = tab === 'unified' ? 'block' : 'none';
+  if (orgdata) orgdata.style.display = tab === 'orgdata' ? 'block' : 'none';
   if (invite) invite.style.display = tab === 'invite' ? 'block' : 'none';
   if (tab === 'invite') renderInviteList();
+  if (tab === 'orgdata') renderOrgDataTable();
+}
+
+/* ============ 组织发起数据 Tab ============ */
+let orgDataSort = { key: 'postCount', asc: false };
+function getOrgDataList() {
+  const search = (document.getElementById('orgDataSearch')?.value || '').toLowerCase();
+  const level = document.getElementById('orgDataLevelFilter')?.value || '';
+  return DATA.orgs.filter(o => {
+    if (level && o.level !== parseInt(level)) return false;
+    if (search && !o.name.toLowerCase().includes(search) && !(o.leader||'').toLowerCase().includes(search)) return false;
+    return true;
+  }).map(o => {
+    // 参与人数：根据帖子去重统计该组织发布人数
+    const users = new Set(DATA.posts.filter(p => p.org === o.name).map(p => p.user));
+    return {
+      id: o.id,
+      name: o.name,
+      level: o.level,
+      parents: o.parents,
+      initCount: o.initCount || 0,
+      memberCount: users.size || Math.floor((o.postCount || 0) / 8), // 兜底估算
+      postCount: o.postCount || 0
+    };
+  });
+}
+function renderOrgDataTable() {
+  const list = getOrgDataList();
+  const { key, asc } = orgDataSort;
+  list.sort((a, b) => {
+    const va = a[key] ?? 0, vb = b[key] ?? 0;
+    if (va === vb) return 0;
+    return (va > vb ? 1 : -1) * (asc ? 1 : -1);
+  });
+  const tbody = document.getElementById('orgDataTableBody');
+  const countEl = document.getElementById('orgDataCount');
+  if (!tbody) return;
+  countEl.textContent = `共 ${list.length} 个组织`;
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-hint)">没有找到匹配的组织</td></tr>`;
+  } else {
+    tbody.innerHTML = list.map(o => `
+      <tr>
+        <td style="font-weight:${o.level===1?'600':'400'}">${o.name}</td>
+        <td><span class="layer-tag layer-${o.level}">${'一二三四五'[o.level-1]}级</span></td>
+        <td style="font-size:12px;color:var(--text-secondary)">${(o.parents && o.parents.length) ? o.parents.join(' / ') : '<span style="color:var(--text-hint)">—</span>'}</td>
+        <td>${o.initCount}</td>
+        <td>${o.memberCount.toLocaleString()}</td>
+        <td>${o.postCount.toLocaleString()}</td>
+      </tr>`).join('');
+  }
+  // 排序箭头
+  document.querySelectorAll('#initPanel-orgdata th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow && arrow.dataset.key === key) {
+      th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+      arrow.textContent = asc ? '↑' : '↓';
+    } else if (arrow) {
+      arrow.textContent = '⇅';
+    }
+  });
+}
+function sortOrgData(key) {
+  if (orgDataSort.key === key) orgDataSort.asc = !orgDataSort.asc;
+  else { orgDataSort.key = key; orgDataSort.asc = false; }
+  renderOrgDataTable();
 }
 
 /* ---- 邀请记录列表（Tab2） ---- */
@@ -1102,28 +1198,29 @@ function renderDrafts() {
 
 function toggleDrafts() {
   const panel = document.getElementById('draftPanel');
-  const initGrid = document.getElementById('initGrid');
+  const listPanel = document.querySelector('#initPanel-unified > .panel');
   if (panel.classList.contains('show')) {
-    // 关闭草稿箱，显示正常倡议
     panel.classList.remove('show');
-    initGrid.style.display = '';
+    if (listPanel) listPanel.style.display = '';
   } else {
-    // 打开草稿箱，隐藏正常倡议
     panel.classList.add('show');
-    initGrid.style.display = 'none';
+    if (listPanel) listPanel.style.display = 'none';
   }
 }
 
 function editDraft(id) {
   const d = DATA.initiatives.find(i => i.id === id);
   if (!d) return;
-  document.getElementById('createInitTitle').value = d.title;
+  document.getElementById('createInitTitle').value = d.title || '';
   document.getElementById('createInitLocation').value = d.location || '';
   document.getElementById('createInitEditId').value = d.id;
   document.getElementById('createInitModalTitle').textContent = '编辑草稿';
   document.getElementById('batchSwitch').checked = false;
   document.getElementById('batchOrgSection').style.display = 'none';
-  document.getElementById('coverPreview').innerHTML = `<div style="width:100%;height:100%;background:${d.color};border-radius:var(--radius)"></div><input type="file" accept="image/*" onchange="handleCoverUpload(this)">`;
+  document.getElementById('customByChildSection').style.display = 'none';
+  document.getElementById('customByChildSwitch').checked = false;
+  document.getElementById('customByChildBlock').style.display = 'none';
+  document.getElementById('unifiedContentBlock').style.display = 'block';
   openModal('createInitModal');
 }
 
@@ -1142,12 +1239,59 @@ function openCreateInitModal() {
   document.getElementById('createInitModalTitle').textContent = '发起倡议';
   document.getElementById('batchSwitch').checked = false;
   document.getElementById('batchOrgSection').style.display = 'none';
-  document.getElementById('coverPreview').innerHTML = '点击上传<input type="file" accept="image/*" onchange="handleCoverUpload(this)">';
+  document.getElementById('customByChildSection').style.display = 'none';
+  document.getElementById('customByChildSwitch').checked = false;
+  document.getElementById('customByChildBlock').style.display = 'none';
+  document.getElementById('unifiedContentBlock').style.display = 'block';
+  // 备注默认值：MMDD + 自定义倡议
+  const d = new Date();
+  const md = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const rk = document.getElementById('createInitRemark');
+  if (rk) rk.value = md + '自定义倡议';
   openModal('createInitModal');
 }
 
 function toggleBatchOrg() {
-  document.getElementById('batchOrgSection').style.display = document.getElementById('batchSwitch').checked ? 'block' : 'none';
+  const on = document.getElementById('batchSwitch').checked;
+  document.getElementById('batchOrgSection').style.display = on ? 'block' : 'none';
+  document.getElementById('customByChildSection').style.display = on ? 'flex' : 'none';
+  if (!on) {
+    // 关闭批量时，也强制关闭自定义
+    document.getElementById('customByChildSwitch').checked = false;
+    document.getElementById('customByChildBlock').style.display = 'none';
+    document.getElementById('unifiedContentBlock').style.display = 'block';
+  }
+}
+
+// 下级自定义倡议开关
+function toggleCustomByChild() {
+  const on = document.getElementById('customByChildSwitch').checked;
+  document.getElementById('customByChildBlock').style.display = on ? 'block' : 'none';
+  document.getElementById('unifiedContentBlock').style.display = on ? 'none' : 'block';
+  if (on) initCustomOrgList();
+}
+function initCustomOrgList() {
+  const list = document.getElementById('customOrgList');
+  if (!list) return;
+  const sortedOrgs = [...DATA.orgs].sort((a,b) => {
+    if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
+    if (a.level !== b.level) return a.level - b.level;
+    return a.name.localeCompare(b.name);
+  });
+  list.innerHTML = sortedOrgs.map(o =>
+    `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex"><input type="checkbox" checked> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`
+  ).join('');
+}
+function filterCustomOrgs() {
+  const level = document.getElementById('customLayerFilter').value;
+  document.querySelectorAll('#customOrgList label').forEach(item => {
+    item.style.display = (!level || item.dataset.level === level) ? 'flex' : 'none';
+  });
+}
+function toggleAllCustomOrgs(checked) {
+  document.querySelectorAll('#customOrgList input[type="checkbox"]').forEach(cb => {
+    if (cb.closest('label').style.display !== 'none') cb.checked = checked;
+  });
 }
 
 function handleCoverUpload(input) {
@@ -1161,39 +1305,66 @@ function handleCoverUpload(input) {
 }
 
 function submitCreateInit() {
+  const isBatch = document.getElementById('batchSwitch').checked;
+  const isCustomByChild = isBatch && document.getElementById('customByChildSwitch').checked;
+  const remark = document.getElementById('createInitRemark')?.value?.trim() || '';
   const title = document.getElementById('createInitTitle').value.trim();
   const location = document.getElementById('createInitLocation')?.value?.trim() || '';
-  if (!title) { showToast('请填写倡议主题'); return; }
+  if (!isCustomByChild && !title) { showToast('请填写倡议内容'); return; }
+  if (isCustomByChild && !remark) { showToast('请填写备注'); return; }
+
   const editId = document.getElementById('createInitEditId').value;
   const colors = ['linear-gradient(135deg,#06B57A,#34D399)','linear-gradient(135deg,#FF8C42,#FBBF24)','linear-gradient(135deg,#4A90D9,#60A5FA)','linear-gradient(135deg,#9B59B6,#8E44AD)','linear-gradient(135deg,#E67E22,#F39C12)','linear-gradient(135deg,#1ABC9C,#16A085)'];
-  const isBatch = document.getElementById('batchSwitch').checked;
-  const checkedOrgs = document.querySelectorAll('#batchOrgList input[type="checkbox"]:checked');
+
+  let checkedOrgs;
+  if (isCustomByChild) {
+    checkedOrgs = document.querySelectorAll('#customOrgList input[type="checkbox"]:checked');
+  } else if (isBatch) {
+    checkedOrgs = document.querySelectorAll('#batchOrgList input[type="checkbox"]:checked');
+  } else {
+    checkedOrgs = [];
+  }
   const orgCount = isBatch ? checkedOrgs.length : 1;
+  const finalTitle = isCustomByChild ? remark : title;
 
   if (editId) {
     const existing = DATA.initiatives.find(i => i.id === parseInt(editId));
-    if (existing) { existing.title = title; existing.location = location; existing.isDraft = false; existing.orgCount = orgCount; }
+    if (existing) {
+      existing.title = finalTitle;
+      existing.location = isCustomByChild ? '' : location;
+      existing.remark = isCustomByChild ? remark : '';
+      existing.customByChild = isCustomByChild;
+      existing.isDraft = false;
+      existing.orgCount = orgCount;
+    }
   } else {
     DATA.initiatives.push({
-      id: DATA.nextInitId++, title,
-      desc: '', location, color: colors[Math.floor(Math.random()*colors.length)],
-      orgCount, postCount: 0, createDate: new Date().toISOString().slice(0,10), isDraft: false
+      id: DATA.nextInitId++,
+      title: finalTitle,
+      desc: '',
+      location: isCustomByChild ? '' : location,
+      remark: isCustomByChild ? remark : '',
+      customByChild: isCustomByChild,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      orgCount,
+      postCount: 0,
+      createDate: new Date().toISOString().slice(0,10),
+      isDraft: false
     });
   }
   closeModal('createInitModal');
   if (isBatch && orgCount > 0) {
-    // 记录最近批量发起的信息，用于直接导出二维码
     const orgNames = [];
     checkedOrgs.forEach(cb => {
       const label = cb.closest('label');
       if (label) orgNames.push(label.textContent.trim());
     });
-    lastBatchInit = { title, orgCount, orgNames };
+    lastBatchInit = { title: finalTitle, orgCount, orgNames };
     document.getElementById('successOrgCount').textContent = orgCount;
-    document.getElementById('successInitTitle').textContent = title;
+    document.getElementById('successInitTitle').textContent = finalTitle;
     openModal('initSuccessModal');
   } else {
-    showToast(`倡议「${title}」发起成功`);
+    showToast(`倡议「${finalTitle}」发起成功`);
   }
   renderInitiatives();
 }
@@ -1269,8 +1440,6 @@ function switchToTopic(initId) {
   if (!init) return;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-topic').classList.add('active');
-  document.getElementById('breadcrumbPage').textContent = '好事发布器 / ' + init.title;
-  document.getElementById('headerActions').innerHTML = '';
   document.getElementById('topicTitle').textContent = init.title;
   document.getElementById('topicDesc').textContent = init.desc;
   document.getElementById('topicBg').style.backgroundImage = init.color.startsWith('linear') ? init.color : `url(${init.color})`;
@@ -1806,8 +1975,6 @@ function navPostDetail(dir) {
 function backToInitiative() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-initiative').classList.add('active');
-  document.getElementById('breadcrumbPage').textContent = '好事发布器';
-  updateHeaderActions('initiative');
   renderInitiatives();
 }
 
