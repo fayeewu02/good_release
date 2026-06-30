@@ -20,11 +20,11 @@ const DATA = {
   nextOrgId: 15,
   initiatives: [
     {id:1,title:'社区清洁日',desc:'号召社区居民一起打扫公共区域，美化社区环境。拍照记录你的清洁行动！',color:'linear-gradient(135deg,#06B57A,#34D399)',orgCount:25,postCount:5234,createDate:'2026-06-10',isDraft:false,customByChild:false,location:'上海市浦东新区',remark:''},
-    {id:2,title:'关爱独居老人',desc:'探访社区独居老人，陪伴聊天、帮助采购。用镜头记录温暖瞬间。',color:'linear-gradient(135deg,#FF8C42,#FBBF24)',orgCount:18,postCount:3890,createDate:'2026-06-05',isDraft:false,customByChild:false,location:'',remark:''},
-    {id:3,title:'绿色出行周',desc:'本周选择步行、骑行或公共交通出行，减少碳排放。分享你的绿色出行方式！',color:'linear-gradient(135deg,#4A90D9,#60A5FA)',orgCount:20,postCount:2100,createDate:'2026-06-15',isDraft:false,customByChild:false,location:'',remark:''},
-    {id:4,title:'节水行动周',desc:'记录每天的节水小妙招，倡导绿色生活方式，从身边做起。',color:'linear-gradient(135deg,#1ABC9C,#16A085)',orgCount:15,postCount:1560,createDate:'2026-06-18',isDraft:false,customByChild:false,location:'',remark:''},
-    {id:5,title:'邻里互助日',desc:'帮助邻居解决生活中的小困难，分享温暖瞬间。',color:'linear-gradient(135deg,#E74C3C,#C0392B)',orgCount:22,postCount:2890,createDate:'2026-06-12',isDraft:false,customByChild:false,location:'',remark:''},
-    {id:8,title:'0628自定义倡议',desc:'',color:'linear-gradient(135deg,#FAAD14,#FFC53D)',orgCount:6,postCount:312,createDate:'2026-06-28',isDraft:false,customByChild:true,location:'',remark:'0628自定义倡议'},
+    {id:2,title:'关爱独居老人',desc:'探访社区独居老人，陪伴聊天、帮助采购。用镜头记录温暖瞬间。',color:'linear-gradient(135deg,#FF8C42,#FBBF24)',orgCount:18,postCount:3893,createDate:'2026-06-05',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:3,title:'绿色出行周',desc:'本周选择步行、骑行或公共交通出行，减少碳排放。分享你的绿色出行方式！',color:'linear-gradient(135deg,#4A90D9,#60A5FA)',orgCount:20,postCount:2103,createDate:'2026-06-15',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:4,title:'节水行动周',desc:'记录每天的节水小妙招，倡导绿色生活方式，从身边做起。',color:'linear-gradient(135deg,#1ABC9C,#16A085)',orgCount:15,postCount:1563,createDate:'2026-06-18',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:5,title:'邻里互助日',desc:'帮助邻居解决生活中的小困难，分享温暖瞬间。',color:'linear-gradient(135deg,#E74C3C,#C0392B)',orgCount:22,postCount:2892,createDate:'2026-06-12',isDraft:false,customByChild:false,location:'',remark:''},
+    {id:8,title:'0628自定义倡议',desc:'',color:'linear-gradient(135deg,#FAAD14,#FFC53D)',orgCount:6,postCount:325,createDate:'2026-06-28',isDraft:false,customByChild:true,location:'',remark:'0628自定义倡议'},
     {id:6,title:'旧衣回收计划',desc:'将闲置的旧衣服整理出来，捐给需要的人。',color:'linear-gradient(135deg,#9B59B6,#8E44AD)',orgCount:0,postCount:0,createDate:'2026-06-20',isDraft:true},
     {id:7,title:'社区读书会',desc:'每周组织一次社区读书分享活动。',color:'linear-gradient(135deg,#E67E22,#F39C12)',orgCount:0,postCount:0,createDate:'2026-06-22',isDraft:true}
   ],
@@ -63,9 +63,44 @@ const DATA = {
     {id:17,initId:4,text:'今天用自制节水器改造了厨房水龙头，每分钟省水40%。',user:'微信用户F',org:'爱心联盟',orgLevel:1,date:'2026-06-20 11:30',color:'linear-gradient(135deg,#E0F2F1,#B2DFDB)',status:'showing'},
     {id:18,initId:4,text:'教孩子用洗菜水浇花，节水从娃娃抓起！',user:'微信用户J',org:'华北分会',orgLevel:2,date:'2026-06-21 15:45',color:'linear-gradient(135deg,#FFF9C4,#FFF59D)',status:'showing'},
     {id:19,initId:5,text:'帮隔壁刘阿姨修好了网络，教她用视频通话联系远方的儿子。',user:'微信用户K',org:'志愿先锋队',orgLevel:3,date:'2026-06-14 09:20',color:'linear-gradient(135deg,#FFCDD2,#EF9A9A)',status:'showing'},
-    {id:20,initId:5,text:'社区邻里分享了自家种的蔬菜，满满的幸福感！',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-13 17:30',color:'linear-gradient(135deg,#DCEDC8,#C5E1A5)',status:'showing'}
+    {id:20,initId:5,text:'社区邻里分享了自家种的蔬菜，满满的幸福感！',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-13 17:30',color:'linear-gradient(135deg,#DCEDC8,#C5E1A5)',status:'showing'},
+    // ==== 关爱独居老人（initId 2）补充 ====
+    {id:21,initId:2,text:'去敬老院给老人们表演了节目，看到他们笑得开心，特别有成就感。',user:'微信用户E',org:'绿色家园',orgLevel:1,date:'2026-06-22 14:10',color:'linear-gradient(135deg,#FFE0B2,#FFCC80)',status:'showing'},
+    {id:22,initId:2,text:'帮王奶奶量了血压、整理了药箱，叮嘱她按时吃药。',user:'微信用户H',org:'社区B队',orgLevel:3,date:'2026-06-21 10:50',color:'linear-gradient(135deg,#F8BBD0,#F48FB1)',status:'showing'},
+    {id:23,initId:2,text:'给独居老人送去新鲜水果，陪他们看了下午的电视。',user:'微信用户F',org:'华北分会',orgLevel:2,date:'2026-06-20 16:00',color:'linear-gradient(135deg,#D1C4E9,#B39DDB)',status:'showing'},
+    // ==== 绿色出行周（initId 3）补充 ====
+    {id:24,initId:3,text:'今天全家步行去超市，来回 3 公里，既省钱又锻炼身体。',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-21 09:50',color:'linear-gradient(135deg,#C8E6C9,#A5D6A7)',status:'showing'},
+    {id:25,initId:3,text:'地铁通勤一周，给地球减少了 8 公斤碳排放，加油！',user:'微信用户H',org:'社区B队',orgLevel:3,date:'2026-06-22 18:20',color:'linear-gradient(135deg,#B3E5FC,#81D4FA)',status:'showing'},
+    {id:26,initId:3,text:'公司组织拼车上下班，5 个同事拼一辆，节能又环保。',user:'微信用户D',org:'华南分会',orgLevel:2,date:'2026-06-23 08:15',color:'linear-gradient(135deg,#A5D6A7,#81C784)',status:'showing'},
+    // ==== 节水行动周（initId 4）补充 ====
+    {id:27,initId:4,text:'安装了节水龙头，每月预计节省 3 吨水。',user:'微信用户G',org:'华东分会',orgLevel:2,date:'2026-06-22 11:00',color:'linear-gradient(135deg,#B2EBF2,#80DEEA)',status:'showing'},
+    {id:28,initId:4,text:'用淘米水浇花，洗澡水冲厕所，节水小妙招分享给大家！',user:'微信用户B',org:'社区A队',orgLevel:3,date:'2026-06-23 17:30',color:'linear-gradient(135deg,#E0F2F1,#B2DFDB)',status:'showing'},
+    {id:29,initId:4,text:'修好了家里漏水的水龙头，节水从一滴开始！',user:'微信用户C',org:'阳光基金会',orgLevel:1,date:'2026-06-24 14:20',color:'linear-gradient(135deg,#FFF9C4,#FFF59D)',status:'showing'},
+    // ==== 邻里互助日（initId 5）补充 ====
+    {id:30,initId:5,text:'帮邻居取了快递，又一起拼单买菜，省事又省钱。',user:'微信用户I',org:'社区C队',orgLevel:3,date:'2026-06-15 10:30',color:'linear-gradient(135deg,#FFCDD2,#EF9A9A)',status:'showing'},
+    {id:31,initId:5,text:'楼下小朋友放学没人接，帮忙照看了一下午。',user:'微信用户J',org:'社区D队',orgLevel:3,date:'2026-06-16 17:00',color:'linear-gradient(135deg,#DCEDC8,#C5E1A5)',status:'showing'},
+    // ==== 0628 自定义倡议（initId 8）— 不同下级组织发的不同主题帖子 ====
+    // 华东分会 · 河岸清洁志愿行动
+    {id:32,initId:8,text:'今天黄浦江畔捡了三大袋垃圾，一边清理一边给路人科普。',user:'微信用户A',org:'华东分会',orgLevel:2,date:'2026-06-29 09:30',color:'linear-gradient(135deg,#B5EAD7,#C7CEEA)',status:'showing'},
+    {id:33,initId:8,text:'河岸边的塑料瓶比我们想象的多得多，下次还要再来。',user:'微信用户B',org:'华东分会',orgLevel:2,date:'2026-06-29 10:45',color:'linear-gradient(135deg,#C5CAE9,#7986CB)',status:'showing'},
+    {id:34,initId:8,text:'第二批志愿者已经接力上场，江畔越来越干净了！',user:'微信用户C',org:'华东分会',orgLevel:2,date:'2026-06-30 08:50',color:'linear-gradient(135deg,#A8E6CF,#DCEDC1)',status:'showing'},
+    // 华南分会 · 社区垃圾分类宣传
+    {id:35,initId:8,text:'在天河区某社区设了宣传摊，发出 200 多份分类指南。',user:'微信用户D',org:'华南分会',orgLevel:2,date:'2026-06-29 14:10',color:'linear-gradient(135deg,#FFD3B6,#FFAAA5)',status:'showing'},
+    {id:36,initId:8,text:'手把手教大爷大妈分类，他们可认真听了！',user:'微信用户E',org:'华南分会',orgLevel:2,date:'2026-06-29 15:30',color:'linear-gradient(135deg,#FFE0B2,#FFCC80)',status:'showing'},
+    {id:37,initId:8,text:'给小朋友设计的趣味分类小游戏特别受欢迎。',user:'微信用户F',org:'华南分会',orgLevel:2,date:'2026-06-30 10:20',color:'linear-gradient(135deg,#FFDAB9,#FFE4B5)',status:'showing'},
+    // 华北分会 · 公园环境维护日
+    {id:38,initId:8,text:'朝阳公园今早环境特别好，我们把湖边的烟头都捡完了。',user:'微信用户G',org:'华北分会',orgLevel:2,date:'2026-06-28 08:30',color:'linear-gradient(135deg,#B2DFDB,#80CBC4)',status:'showing'},
+    {id:39,initId:8,text:'把破损的长椅修好了，路过的爷爷连声道谢。',user:'微信用户H',org:'华北分会',orgLevel:2,date:'2026-06-28 11:15',color:'linear-gradient(135deg,#FFF9C4,#FFF59D)',status:'showing'},
+    // 社区A队 · 楼道公共空间整理
+    {id:40,initId:8,text:'楼道里堆了一年的杂物终于清理完了，邻居们都来帮忙。',user:'微信用户I',org:'社区A队',orgLevel:3,date:'2026-06-28 16:40',color:'linear-gradient(135deg,#BBDEFB,#90CAF9)',status:'showing'},
+    {id:41,initId:8,text:'重新刷了楼道墙面，画了简单的环保宣传画。',user:'微信用户J',org:'社区A队',orgLevel:3,date:'2026-06-29 14:00',color:'linear-gradient(135deg,#C8E6C9,#A5D6A7)',status:'showing'},
+    // 社区B队 · 敬老院探访
+    {id:42,initId:8,text:'去敬老院陪老人聊天、唱歌，老人们很开心。',user:'微信用户K',org:'社区B队',orgLevel:3,date:'2026-06-29 10:00',color:'linear-gradient(135deg,#F8BBD0,#F48FB1)',status:'showing'},
+    {id:43,initId:8,text:'给老人们带了亲手做的小点心，他们一直夸好吃。',user:'微信用户A',org:'社区B队',orgLevel:3,date:'2026-06-29 15:30',color:'linear-gradient(135deg,#FFCDD2,#EF9A9A)',status:'showing'},
+    // 志愿先锋队 · 已被本级隐藏（演示用：1 条 hidden）
+    {id:44,initId:8,text:'广告内容（已被本级隐藏）',user:'微信用户B',org:'志愿先锋队',orgLevel:3,date:'2026-06-29 18:00',color:'#E8E8E8',status:'hidden',hiddenBy:'org'}
   ],
-  nextPostId: 21,
+  nextPostId: 45,
   // 倡议与组织的关联数据（initId → 组织列表）
   initOrgs: {
     1: [ // 社区清洁日
@@ -1211,27 +1246,48 @@ function renderDrafts() {
   const panel = document.getElementById('draftPanel');
   if (!bar) return;
   bar.textContent = `草稿箱 (${drafts.length})`;
-  if (drafts.length === 0) { bar.style.display = 'none'; panel.classList.remove('show'); return; }
+  if (drafts.length === 0) {
+    bar.style.display = 'none';
+    panel.classList.remove('show');
+    // 草稿为空时也要恢复列表显示
+    const listPanel = document.querySelector('#initPanel-unified > .panel');
+    if (listPanel) listPanel.style.display = '';
+    return;
+  }
   bar.style.display = 'inline-flex';
   bar.className = 'btn';
-  // 草稿图卡视图
-  panel.querySelector('.draft-list').innerHTML = `<div class="initiative-grid" style="margin-bottom:0">${drafts.map(d => `
-    <div class="init-card" style="cursor:default">
-      <div class="cover" style="background:${d.color};position:relative">
-        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px">草稿</div>
+  // 草稿列表视图（与倡议管理一致的表格样式）+ 顶部返回按钮
+  panel.querySelector('.draft-list').innerHTML = `
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">
+      <a class="btn-link" onclick="toggleDrafts()" style="font-size:13px">← 返回倡议管理</a>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h3>草稿箱 (${drafts.length})</h3></div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="data-table init-list-table">
+          <thead>
+            <tr>
+              <th>倡议内容</th>
+              <th style="width:160px">活动地址</th>
+              <th style="width:140px">创建时间</th>
+              <th style="width:140px">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${drafts.map(d => `
+              <tr>
+                <td><div class="init-title">${d.title || '（未填写倡议内容）'}</div></td>
+                <td style="font-size:14px;color:var(--text-secondary)">${d.location || '—'}</td>
+                <td style="font-size:14px;color:var(--text-secondary)">${d.createDate}</td>
+                <td class="actions-cell">
+                  <a class="btn-link" onclick="editDraft(${d.id})">编辑</a>
+                  <a class="btn-link btn-danger" onclick="deleteDraft(${d.id})">删除</a>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
       </div>
-      <div class="body">
-        <h4>${d.title}</h4>
-        <div class="desc">${d.location ? '📍 ' + d.location : (d.desc || '不限活动地点')}</div>
-        <div class="foot">
-          <span style="font-size:11px;color:var(--text-hint)">创建于 ${d.createDate}</span>
-          <div style="display:flex;gap:8px">
-            <a class="btn-link" onclick="editDraft(${d.id})" style="font-size:12px">编辑</a>
-            <a class="btn-link btn-danger" onclick="deleteDraft(${d.id})" style="font-size:12px">删除</a>
-          </div>
-        </div>
-      </div>
-    </div>`).join('')}</div>`;
+    </div>`;
 }
 
 function toggleDrafts() {
@@ -1479,19 +1535,7 @@ function switchToTopic(initId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-topic').classList.add('active');
   document.getElementById('topicTitle').textContent = init.customByChild ? (init.remark || init.title) : init.title;
-  // 自定义倡议：隐藏描述行 + 顶部统计卡
-  const descEl = document.getElementById('topicDesc');
-  const statsCard = document.getElementById('topicStatsCard');
-  if (init.customByChild) {
-    if (descEl) descEl.style.display = 'none';
-    if (statsCard) statsCard.style.display = 'none';
-  } else {
-    if (descEl) {
-      descEl.style.display = '';
-      descEl.textContent = init.desc || (init.location ? '📍 ' + init.location : '不限活动地点');
-    }
-    if (statsCard) statsCard.style.display = '';
-  }
+  // 倡议说明 + 顶部数据卡 已从页面移除，无需处理
   // 自定义倡议显示"下级倡议管理"Tab
   const childTab = document.getElementById('topicTabChildInit');
   if (childTab) childTab.style.display = init.customByChild ? '' : 'none';
@@ -1523,11 +1567,11 @@ function switchTopicMainTab(tab) {
 DATA.childInitiatives = {
   // initId 8: 0628自定义倡议
   8: [
-    {id:801, orgName:'华东分会', orgLevel:2, title:'河岸清洁志愿行动', location:'上海黄浦江畔', date:'2026-06-29', postCount:42, status:'showing'},
-    {id:802, orgName:'华南分会', orgLevel:2, title:'社区垃圾分类宣传', location:'广州天河区', date:'2026-06-29', postCount:30, status:'showing'},
-    {id:803, orgName:'华北分会', orgLevel:2, title:'公园环境维护日', location:'北京朝阳区', date:'2026-06-28', postCount:18, status:'showing'},
-    {id:804, orgName:'社区A队', orgLevel:3, title:'楼道公共空间整理', location:'本社区', date:'2026-06-28', postCount:15, status:'showing'},
-    {id:805, orgName:'社区B队', orgLevel:3, title:'敬老院探访', location:'合肥蜀山', date:'2026-06-29', postCount:12, status:'showing'},
+    {id:801, orgName:'华东分会', orgLevel:2, title:'河岸清洁志愿行动', location:'上海黄浦江畔', date:'2026-06-29', postCount:3, status:'showing'},
+    {id:802, orgName:'华南分会', orgLevel:2, title:'社区垃圾分类宣传', location:'广州天河区', date:'2026-06-29', postCount:3, status:'showing'},
+    {id:803, orgName:'华北分会', orgLevel:2, title:'公园环境维护日', location:'北京朝阳区', date:'2026-06-28', postCount:2, status:'showing'},
+    {id:804, orgName:'社区A队', orgLevel:3, title:'楼道公共空间整理', location:'本社区', date:'2026-06-28', postCount:2, status:'showing'},
+    {id:805, orgName:'社区B队', orgLevel:3, title:'敬老院探访', location:'合肥蜀山', date:'2026-06-29', postCount:2, status:'showing'},
     {id:806, orgName:'志愿先锋队', orgLevel:3, title:'广告内容（已被本级隐藏）', location:'石家庄', date:'2026-06-29', postCount:0, status:'hidden'}
   ]
 };
@@ -1630,12 +1674,14 @@ function renderTopicStats() {
   const orgs = new Set(filteredPosts.map(p => p.org));
   const hasFilter = levelFilter || orgFilter || dateFrom || dateTo;
   const orgCount = orgs.size > 0 ? orgs.size : (hasFilter ? 0 : (init?.orgCount || 0));
-  document.getElementById('topicOrgCount').textContent = orgCount;
-  // 统计参与人数
+  // 顶部 3 个数据卡已移除，元素可能不存在，加 null guard
+  const orgEl = document.getElementById('topicOrgCount');
+  if (orgEl) orgEl.textContent = orgCount;
   const users = new Set(filteredPosts.map(p => p.user));
-  document.getElementById('topicUserCount').textContent = users.size > 0 ? users.size.toLocaleString() : (hasFilter ? '0' : (init?.orgCount * 50 || 0).toLocaleString());
-  // 统计发帖数
-  document.getElementById('topicPostCount').textContent = filteredPosts.filter(p => p.status === 'showing').length.toLocaleString();
+  const userEl = document.getElementById('topicUserCount');
+  if (userEl) userEl.textContent = users.size > 0 ? users.size.toLocaleString() : (hasFilter ? '0' : (init?.orgCount * 50 || 0).toLocaleString());
+  const postEl = document.getElementById('topicPostCount');
+  if (postEl) postEl.textContent = filteredPosts.filter(p => p.status === 'showing').length.toLocaleString();
 }
 
 // 话题页组织搜索下拉

@@ -130,10 +130,25 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 /* 倡议列表表格 */
 .init-action-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .init-list-table .init-cover-thumb{width:40px;height:40px;border-radius:var(--radius);flex-shrink:0;background-size:cover;background-position:center}
-.init-list-table .init-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4}
-.init-list-table .init-type-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap}
+.init-list-table .init-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.5}
+.init-list-table .init-type-tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:500;border:1px solid;white-space:nowrap}
 .init-list-table .init-type-unified{color:#1890FF;background:#E6F7FF;border-color:#91D5FF}
 .init-list-table .init-type-custom{color:#FA8C16;background:#FFF7E6;border-color:#FFD591}
+
+/* 倡议管理 / 组织数据 统一放大字号、减小行高留白 */
+.init-list-table th,
+#initPanel-orgdata .data-table th{
+  font-size:14px !important;
+  padding:9px 12px !important;
+}
+.init-list-table td,
+#initPanel-orgdata .data-table td{
+  font-size:14px !important;
+  padding:9px 12px !important;
+  line-height:1.5;
+}
+.init-list-table .actions-cell .btn-link,
+#initPanel-orgdata .data-table .btn-link{font-size:14px}
 
 /* 二维码示例（导出弹窗内） */
 .qr-sample{width:110px;flex-shrink:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:8px;text-align:center}
