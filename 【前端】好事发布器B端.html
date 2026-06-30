@@ -120,7 +120,7 @@
           <!-- 操作按钮：移到筛选器上方 -->
           <div class="init-action-bar">
             <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
-            <button class="btn" onclick="openModal('exportQRModal')">批量导出倡议</button>
+            <button class="btn" onclick="renderQRModal();openModal('exportQRModal')">批量导出倡议</button>
             <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
           </div>
           <div class="filter-bar">
@@ -851,47 +851,37 @@
 
 <!-- ===== 弹窗：批量导出二维码 ===== -->
 <div class="modal-overlay" id="exportQRModal">
-  <div class="modal" style="width:580px">
+  <div class="modal" style="width:560px">
     <div class="modal-header"><h3>批量导出倡议二维码</h3><button class="modal-close" onclick="closeModal('exportQRModal')">✕</button></div>
     <div class="modal-body">
       <div class="form-group">
         <label>第一步：选择倡议（可多选）</label>
-        <div style="margin-bottom:6px">
-          <input type="text" id="qrInitSearchInput" placeholder="搜索倡议主题..." style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px" oninput="filterQRInitList()">
+        <div style="position:relative">
+          <input type="text" id="qrInitSearchInput" placeholder="输入倡议内容关键词搜索后勾选..." style="width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" oninput="onQRInitSearchInput()" onfocus="onQRInitSearchInput()">
+          <!-- 搜索结果浮层：仅当输入关键词时显示 -->
+          <div id="qrInitSearchDropdown" class="qr-init-dropdown" style="display:none"></div>
         </div>
-        <div class="org-selector" id="qrInitList"></div>
+        <!-- 已选倡议标签区 -->
+        <div id="qrInitSelected" class="qr-init-tags" style="display:none"></div>
       </div>
+
       <div class="form-group">
-        <label>第二步：选择组织（本级及下级）</label>
-        <div style="margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <label>选择发起组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
           <select id="qrOrgLayerFilter" onchange="filterQROrgByLayer()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
             <option value="">全部层级</option>
-            <option value="all1">全部一级组织</option>
-            <option value="all2">全部二级组织</option>
-            <option value="all3">全部三级组织</option>
-            <option value="all4">全部四级组织</option>
-            <option value="all5">全部五级组织</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option>
+            <option value="4">四级组织</option>
+            <option value="5">五级组织</option>
           </select>
           <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="qrSelectAllCb" onchange="toggleAllQROrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
         </div>
         <div class="org-selector" id="qrOrgList"></div>
       </div>
-      <!-- 二维码样式说明 + 示例 -->
-      <div style="background:#FAFAFA;padding:12px 14px;border-radius:var(--radius);font-size:12px;color:var(--text-secondary);display:flex;gap:14px;align-items:center">
-        <div class="qr-sample">
-          <div class="qr-sample-name">阳光基金会-华东分会</div>
-          <div class="qr-sample-img">
-            <div class="qr-dots"></div>
-            <div class="qr-flower">🌺</div>
-          </div>
-        </div>
-        <div style="flex:1;line-height:1.7">
-          <p style="font-weight:600;color:var(--text);margin-bottom:4px">每个二维码都会自动带上对应的组织名称标识</p>
-          <p>导出内容：倡议主题、组织名称、所属层级、倡议二维码（每张二维码顶部都包含「<strong>所属机构-组织名称</strong>」文字，扫码即定向到该组织专属页面）。</p>
-        </div>
-      </div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出 Excel</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出压缩包</button></div>
   </div>
 </div>
 
@@ -1126,48 +1116,83 @@ document.addEventListener('DOMContentLoaded', () => {
   renderQRModal();
 });
 function renderQRModal() {
-  const list = document.getElementById('qrInitList');
-  if (!list) return;
-  const activeInits = DATA.initiatives.filter(i => !i.isDraft);
-  list.innerHTML = activeInits.map(i => `<label data-title="${i.title.toLowerCase()}"><input type="checkbox" value="${i.id}"> ${i.title}</label>`).join('');
+  // 重置已选倡议
+  qrSelectedInits.clear();
+  const search = document.getElementById('qrInitSearchInput');
+  if (search) search.value = '';
+  const dropdown = document.getElementById('qrInitSearchDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  renderQRInitTags();
   renderQROrgList();
 }
+
+// 倡议搜索：仅在输入关键词后显示候选；与发起倡议批量选择保持轻量风格
+let qrSelectedInits = new Set(); // 已选倡议 id 集合
+function onQRInitSearchInput() {
+  const kw = (document.getElementById('qrInitSearchInput').value || '').trim().toLowerCase();
+  const dropdown = document.getElementById('qrInitSearchDropdown');
+  if (!kw) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
+  const matched = DATA.initiatives.filter(i => !i.isDraft && (i.title || '').toLowerCase().includes(kw));
+  if (matched.length === 0) {
+    dropdown.innerHTML = `<div class="qr-init-empty">未找到匹配的倡议</div>`;
+  } else {
+    dropdown.innerHTML = matched.map(i => `
+      <label class="qr-init-opt">
+        <input type="checkbox" value="${i.id}" ${qrSelectedInits.has(i.id) ? 'checked' : ''} onchange="toggleQRInit(${i.id}, this.checked)">
+        <span style="flex:1">${i.title}</span>
+        ${i.customByChild ? '<span class="init-type-tag init-type-custom" style="font-size:10px;padding:0 6px">下级自定义</span>' : ''}
+      </label>`).join('');
+  }
+  dropdown.style.display = 'block';
+}
+function toggleQRInit(id, checked) {
+  if (checked) qrSelectedInits.add(id); else qrSelectedInits.delete(id);
+  renderQRInitTags();
+}
+function removeQRInitTag(id) {
+  qrSelectedInits.delete(id);
+  renderQRInitTags();
+  // 同步浮层中的 checkbox
+  const cb = document.querySelector(`#qrInitSearchDropdown input[value="${id}"]`);
+  if (cb) cb.checked = false;
+}
+function renderQRInitTags() {
+  const wrap = document.getElementById('qrInitSelected');
+  if (!wrap) return;
+  if (qrSelectedInits.size === 0) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  const tags = Array.from(qrSelectedInits).map(id => {
+    const init = DATA.initiatives.find(i => i.id === id);
+    if (!init) return '';
+    return `<span class="qr-init-tag">${init.title}<span class="qr-init-tag-close" onclick="removeQRInitTag(${id})">✕</span></span>`;
+  }).join('');
+  wrap.innerHTML = tags;
+  wrap.style.display = 'flex';
+}
+// 点击弹窗其他位置时关闭浮层
+document.addEventListener('click', e => {
+  const dd = document.getElementById('qrInitSearchDropdown');
+  const inp = document.getElementById('qrInitSearchInput');
+  if (!dd || !inp) return;
+  if (e.target !== inp && !dd.contains(e.target)) dd.style.display = 'none';
+});
+
 function renderQROrgList() {
   const orgList = document.getElementById('qrOrgList');
+  if (!orgList) return;
   const sortedOrgs = [...DATA.orgs].sort((a,b) => {
     if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
     if (a.level !== b.level) return a.level - b.level;
     return a.name.localeCompare(b.name);
   });
-  orgList.innerHTML = sortedOrgs.map(o => `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}"><input type="checkbox" checked onchange="updateQRSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三'[o.level-1]}级</span>${o.name}</label>`).join('');
-}
-function filterQRInitList() {
-  const keyword = document.getElementById('qrInitSearchInput').value.toLowerCase();
-  const labels = document.querySelectorAll('#qrInitList label');
-  labels.forEach(label => {
-    const title = label.getAttribute('data-title') || label.textContent.toLowerCase();
-    label.style.display = (!keyword || title.includes(keyword)) ? 'flex' : 'none';
-  });
+  orgList.innerHTML = sortedOrgs.map(o => `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}"><input type="checkbox" checked onchange="updateQRSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`).join('');
 }
 function filterQROrgByLayer() {
   const val = document.getElementById('qrOrgLayerFilter').value;
   const labels = document.querySelectorAll('#qrOrgList label');
-  if (val === '') {
-    // 全部层级：显示所有，不修改勾选状态
-    labels.forEach(label => label.style.display = 'flex');
-  } else if (val.startsWith('all')) {
-    const level = val.replace('all', '');
-    // 快捷选择：选中对应层级的所有组织
-    labels.forEach(label => {
-      label.style.display = 'flex';
-      const cb = label.querySelector('input[type="checkbox"]');
-      if (label.dataset.level === level) {
-        cb.checked = true;
-      } else {
-        cb.checked = false;
-      }
-    });
-  }
+  // 统一逻辑：与发起倡议层级筛选一致——按层级显示/隐藏，不修改已勾选状态
+  labels.forEach(label => {
+    label.style.display = (!val || label.dataset.level === val) ? 'flex' : 'none';
+  });
   updateQRSelectAllCb();
 }
 function toggleAllQROrgs(checked) {

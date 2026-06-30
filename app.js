@@ -1555,15 +1555,15 @@ function toggleChildInitStatus(id, newStatus) {
   showToast(newStatus === 'hidden' ? `已隐藏「${c.orgName}」发起的倡议` : `已恢复展示「${c.orgName}」发起的倡议`);
 }
 
-/* ===== 导出倡议二维码（每张含组织名称） ===== */
+/* ===== 导出倡议二维码（每张含组织名称，导出为 ZIP 压缩包） ===== */
 function confirmExportInitQR() {
-  const inits = Array.from(document.querySelectorAll('#qrInitList input[type=checkbox]:checked')).map(cb => cb.value);
+  const initIds = (typeof qrSelectedInits !== 'undefined') ? Array.from(qrSelectedInits) : [];
   const orgs = Array.from(document.querySelectorAll('#qrOrgList input[type=checkbox]:checked')).map(cb => cb.closest('label').textContent.trim());
-  if (inits.length === 0) { showToast('请至少选择一个倡议'); return; }
+  if (initIds.length === 0) { showToast('请先搜索并勾选要导出的倡议'); return; }
   if (orgs.length === 0) { showToast('请至少选择一个组织'); return; }
-  const total = inits.length * orgs.length;
+  const total = initIds.length * orgs.length;
   closeModal('exportQRModal');
-  showToast(`已生成 ${total} 张二维码（每张含「组织名称」标识），Excel 下载中...`);
+  showToast(`已生成 ${total} 张二维码（每张含「组织名称」标识），压缩包下载中...`);
 }
 
 function getTopicFilters() {
