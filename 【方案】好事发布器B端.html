@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好事发布器 B端管理系统 · 功能设计汇报</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif; color: #1a1a1a; line-height: 1.7; background: #fff; }
+
+/* 顶部 */
+.header { padding: 60px 0 40px; text-align: center; border-bottom: 1px solid #eee; }
+.header h1 { font-size: 32px; font-weight: 600; letter-spacing: 1px; }
+.header .subtitle { font-size: 16px; color: #888; margin-top: 8px; }
+
+/* 容器 */
+.container { max-width: 1060px; margin: 0 auto; padding: 0 40px; }
+
+/* 大章节 */
+.section { padding: 48px 0; border-bottom: 1px solid #f0f0f0; }
+.section:last-child { border-bottom: none; }
+.section-title { font-size: 22px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+.section-title .num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: #1a1a1a; color: #fff; border-radius: 6px; font-size: 15px; font-weight: 600; }
+
+/* 概述区域 */
+.overview { padding: 48px 0; border-bottom: 1px solid #f0f0f0; }
+.overview-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+
+/* 脑图 - 从左到右分叉（融合介绍卡） */
+.mindmap { margin: 24px 0 0; padding: 32px 36px; background: #fafafa; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: stretch; gap: 0; overflow-x: auto; }
+.mindmap-root { padding: 18px 22px; background: #1a1a1a; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; text-align: center; line-height: 1.4; }
+.mindmap-connector { width: 44px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+.mindmap-connector::after { content: ''; position: absolute; left: 0; right: 8px; top: 50%; height: 1px; background: #ccc; }
+.mindmap-connector-arrow { color: #ccc; font-size: 16px; position: relative; z-index: 1; }
+
+/* 脑图分支 */
+.mindmap-branches { display: flex; flex-direction: column; gap: 16px; }
+.mindmap-branch-item { display: flex; align-items: stretch; gap: 0; }
+.mindmap-l1-box { padding: 12px 18px; background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; }
+.mindmap-l1-connector { width: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+.mindmap-l1-connector::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #ddd; }
+
+/* 脑图介绍卡 */
+.mindmap-desc-card { padding: 14px 18px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; flex-shrink: 0; max-width: 360px; }
+.mindmap-desc-card .card-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
+.mindmap-desc-card .card-text { font-size: 12px; color: #666; line-height: 1.5; }
+
+/* 动员工具子分支 */
+.mindmap-sub-branches { display: flex; flex-direction: column; gap: 8px; }
+.mindmap-sub-item { display: flex; align-items: stretch; gap: 0; }
+.mindmap-l2-box { padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; }
+.mindmap-l2-box.dim { opacity: 0.45; }
+.mindmap-l2-connector { width: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+.mindmap-l2-connector::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #e0e0e0; }
+
+/* 功能卡片 - 横向排布 */
+.feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.feature-row.three-col { grid-template-columns: 1fr 1fr 1fr; }
+.feature-card { padding: 24px; background: #fafafa; border-radius: 10px; border: 1px solid #eee; }
+.feature-card h4 { font-size: 16px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
+.feature-card p { font-size: 14px; color: #666; margin-bottom: 8px; line-height: 1.6; }
+.feature-list { list-style: none; padding: 0; }
+.feature-list li { font-size: 14px; color: #444; padding: 5px 0; padding-left: 16px; position: relative; line-height: 1.6; }
+.feature-list li::before { content: ''; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; background: #1a1a1a; border-radius: 50%; }
+
+/* 流程图 */
+.flow { display: flex; align-items: center; gap: 0; margin: 16px 0; flex-wrap: wrap; }
+.flow-step { padding: 11px 18px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-weight: 500; color: #333; }
+.flow-arrow { padding: 0 10px; color: #ccc; font-size: 18px; }
+
+/* 流程区域 */
+.flow-section { margin-bottom: 24px; padding: 22px 26px; background: #fafafa; border-radius: 10px; border: 1px solid #eee; }
+.flow-section h4 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+
+/* 标签 */
+.tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; margin-left: 6px; }
+.tag-core { background: #1a1a1a; color: #fff; }
+.tag-shared { background: #e8e8e8; color: #333; }
+
+/* 重点标注 */
+.highlight-box { margin: 16px 0; padding: 14px 18px; border-left: 3px solid #1a1a1a; background: #fafafa; border-radius: 0 8px 8px 0; }
+.highlight-box p { font-size: 14px; color: #444; }
+.highlight-box strong { color: #1a1a1a; }
+
+/* 表格 */
+.simple-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.simple-table th { text-align: left; padding: 10px 12px; background: #f5f5f5; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #333; }
+.simple-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <h1>好事发布器 · B端管理系统</h1>
+    <p class="subtitle">功能设计汇报 · 腾讯公益 机构服务平台</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 概述：系统菜单架构 -->
+  <div class="overview">
+    <div class="overview-title">系统概述</div>
+    
+    <p style="font-size:15px;color:#555;margin-bottom:16px">本系统位于「腾讯公益·机构服务平台」的「经营推广」导航区下，包含三大模块：</p>
+
+    <!-- 脑图：从左到右分叉，融合介绍卡片 -->
+    <div class="mindmap">
+      <div class="mindmap-root">机构服务平台<br>——<br>经营推广</div>
+      <div class="mindmap-connector"><span class="mindmap-connector-arrow">—→</span></div>
+      <div class="mindmap-branches">
+        <!-- 体系管理分支 -->
+        <div class="mindmap-branch-item">
+          <div class="mindmap-l1-box">体系管理</div>
+          <div class="mindmap-l1-connector"></div>
+          <div class="mindmap-desc-card">
+            <div class="card-text">搭建组织架构底座，维护组织和成员信息，供所有动员工具复用，无需重复建设。</div>
+          </div>
+        </div>
+        <!-- 数据中心分支 -->
+        <div class="mindmap-branch-item">
+          <div class="mindmap-l1-box">数据中心</div>
+          <div class="mindmap-l1-connector"></div>
+          <div class="mindmap-desc-card">
+            <div class="card-text">统一数据看板，展示各工具运营数据，支持多维度筛选和导出分析。</div>
+          </div>
+        </div>
+        <!-- 动员工具分支 -->
+        <div class="mindmap-branch-item">
+          <div class="mindmap-l1-box">动员工具</div>
+          <div class="mindmap-l1-connector"></div>
+          <div class="mindmap-sub-branches">
+            <!-- 好事发布器 -->
+            <div class="mindmap-sub-item">
+              <div class="mindmap-l2-box">好事发布器</div>
+              <div class="mindmap-l2-connector"></div>
+              <div class="mindmap-desc-card">
+                <div class="card-text">批量发起公益倡议，管理用户发帖内容，形成「发起→参与→审核→展示」闭环。</div>
+              </div>
+            </div>
+            <!-- 劝募大使 -->
+            <div class="mindmap-sub-item">
+              <div class="mindmap-l2-box dim">劝募大使（待开发）</div>
+            </div>
+            <!-- 其他工具 -->
+            <div class="mindmap-sub-item">
+              <div class="mindmap-l2-box dim">其他工具（待开发）</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第一部分：体系管理 -->
+  <div class="section">
+    <div class="section-title"><span class="num">1</span> 体系管理 <span class="tag tag-shared">公共模块</span></div>
+    
+    <p style="font-size:15px;color:#555;margin-bottom:12px">机构只需维护<strong>一套组织架构</strong>，所有动员工具<strong>共享使用</strong>，无需重复建设。</p>
+
+    <div class="feature-row">
+      <div class="feature-card">
+        <h4>组织架构管理页</h4>
+        <ul class="feature-list">
+          <li>支持最多<strong>三级组织结构</strong>（如：基金会→区域分会→社区小队）</li>
+          <li>新建组织时选择上级，自动确定层级归属</li>
+          <li>支持<strong>批量导入</strong>（Excel模板）和<strong>批量导出</strong></li>
+          <li>每个组织可生成<strong>专属二维码</strong>，用于成员扫码加入</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h4>成员管理页</h4>
+        <ul class="feature-list">
+          <li>每个组织独立管理成员（姓名、职务、联系方式）</li>
+          <li>支持<strong>单个新增</strong>和<strong>批量导入</strong>两种方式</li>
+          <li>组织负责人与普通成员独立管理</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第二部分：好事发布器 -->
+  <div class="section">
+    <div class="section-title"><span class="num">2</span> 好事发布器 <span class="tag tag-core">动员工具</span></div>
+    
+    <p style="font-size:15px;color:#555;margin-bottom:16px">机构运营者<strong>批量发起公益倡议</strong>，管理用户发帖内容，完成从发起到展示的<strong>完整流程</strong>。</p>
+
+    <!-- 核心操作流程放最上面 -->
+    <div class="flow-section">
+      <h4>核心操作流程</h4>
+      <div class="flow">
+        <div class="flow-step">创建倡议（可批量创建）</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">选择发起组织</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">发起成功</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">导出二维码</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">线下分发</div>
+      </div>
+    </div>
+
+    <!-- 横向排布两个模块 -->
+    <div class="feature-row">
+      <div class="feature-card">
+        <h4>倡议管理页</h4>
+        <p>创建和管理公益倡议话题</p>
+        <ul class="feature-list">
+          <li>一次创建倡议，可同时<strong>指派给多个组织</strong></li>
+          <li>支持保存<strong>草稿</strong>，后续继续编辑发布</li>
+          <li><strong>批量导出二维码</strong>（含组织名、层级、二维码图片）</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h4>帖子管理页</h4>
+        <p>审核和管理用户发布的帖子</p>
+        <ul class="feature-list">
+          <li>三个状态Tab：<strong>展示中 / 待审核 / 已隐藏</strong></li>
+          <li>支持按组织、时间、关键词<strong>筛选</strong>帖子</li>
+          <li><strong>一键切换</strong>帖子的展示或隐藏状态</li>
+          <li>页面顶部展示<strong>实时数据</strong>：发起组织数、参与人数、发帖数</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第三部分：数据中心 -->
+  <div class="section">
+    <div class="section-title"><span class="num">3</span> 数据中心</div>
+    
+    <p style="font-size:15px;color:#555;margin-bottom:16px">按动员工具维度<strong>分Tab查看</strong>运营数据，支持时间、组织、倡议等<strong>多维度筛选</strong>。</p>
+
+    <!-- 两个功能页左右呈现 -->
+    <div class="feature-row">
+      <div class="feature-card">
+        <h4>数据看板页</h4>
+        <p>可视化展示运营全貌</p>
+        <table class="simple-table">
+          <thead><tr><th>模块</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>核心指标卡</td><td>总发布倡议数、总参与人数、总发布好事数</td></tr>
+            <tr><td>趋势图表</td><td>每日发布趋势（折线图）+ 每日参与人数（柱状图）</td></tr>
+            <tr><td>组织排行榜</td><td>按发布条数/参与人数/人均发布排序</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="feature-card">
+        <h4>数据导出页</h4>
+        <p>支持三种维度的数据导出</p>
+        <table class="simple-table">
+          <thead><tr><th>导出类型</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>组织汇总表</td><td>各组织参与人数、发布条数、参与率</td></tr>
+            <tr><td>帖子明细表</td><td>每条帖子的发布人、组织、时间、状态</td></tr>
+            <tr><td>按日统计表</td><td>每日新增帖子数、参与人数</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center;padding:40px;font-size:13px;color:#ccc;border-top:1px solid #f0f0f0;margin-top:20px">
+  腾讯公益 · 机构服务平台 · 好事发布器 B端管理系统
+</div>
+
+</body>
+</html>
