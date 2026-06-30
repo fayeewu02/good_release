@@ -52,7 +52,7 @@
           </div>
           <div class="filter-sep"></div>
           <span class="filter-label">组织名称/负责人：</span>
-          <input type="text" id="orgSearch" placeholder="输入组织名称或负责人，支持模糊搜索" style="width:220px" oninput="renderOrgTable()">
+          <input type="text" id="orgSearch" placeholder="输入组织名称或负责人" style="width:220px" oninput="renderOrgTable()">
           <div class="filter-sep"></div>
           <span class="filter-label">仅查看</span>
           <div class="level-filter" id="levelFilter">
@@ -111,42 +111,40 @@
         <!-- 主Tab切换 -->
         <div class="tabs" id="initMainTabs">
           <div class="tab active" data-inittab="unified" onclick="switchInitMainTab('unified')">倡议管理</div>
-          <div class="tab" data-inittab="orgdata" onclick="switchInitMainTab('orgdata')">组织发起数据</div>
+          <div class="tab" data-inittab="orgdata" onclick="switchInitMainTab('orgdata')">组织数据</div>
           <div class="tab" data-inittab="invite" onclick="switchInitMainTab('invite')" style="display:none">邀请下级发起管理</div>
         </div>
 
         <!-- ===== Tab1：倡议管理 ===== -->
         <div class="init-main-panel" id="initPanel-unified">
+          <!-- 操作按钮：移到筛选器上方 -->
+          <div class="init-action-bar">
+            <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
+            <button class="btn" onclick="openModal('exportQRModal')">批量导出倡议</button>
+            <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
+          </div>
           <div class="filter-bar">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
-              <span class="filter-label">发布时间</span>
-              <input type="date" id="initDateFrom" value="2026-06-01">
-              <span style="color:var(--text-hint)">至</span>
-              <input type="date" id="initDateTo" value="2026-06-30">
-              <div class="filter-sep"></div>
-              <span class="filter-label">内容：</span>
-              <input type="text" id="initSearch" placeholder="搜索倡议内容..." style="width:160px" oninput="renderInitiatives()">
-              <div class="filter-sep"></div>
-              <span class="filter-label">发起组织：</span>
-              <div style="position:relative;display:inline-block">
-                <input type="text" id="initOrgSearch" placeholder="搜索发起组织..." style="width:160px" oninput="filterInitOrgDropdown()" onfocus="showInitOrgDropdown()" autocomplete="off">
-                <input type="hidden" id="initOrgFilter" value="">
-                <div id="initOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
-              </div>
-              <div class="filter-sep"></div>
-              <span class="filter-label">倡议类型：</span>
-              <select id="initTypeFilter" onchange="renderInitiatives()" style="width:150px">
-                <option value="">全部类型</option>
-                <option value="unified">统一倡议</option>
-                <option value="custom">下级自定义倡议</option>
-              </select>
+            <span class="filter-label">发布时间</span>
+            <input type="date" id="initDateFrom" value="2026-06-01">
+            <span style="color:var(--text-hint)">至</span>
+            <input type="date" id="initDateTo" value="2026-06-30">
+            <div class="filter-sep"></div>
+            <span class="filter-label">内容：</span>
+            <input type="text" id="initSearch" placeholder="搜索倡议内容..." style="width:160px" oninput="renderInitiatives()">
+            <div class="filter-sep"></div>
+            <span class="filter-label">发起组织：</span>
+            <div style="position:relative;display:inline-block">
+              <input type="text" id="initOrgSearch" placeholder="搜索发起组织..." style="width:160px" oninput="filterInitOrgDropdown()" onfocus="showInitOrgDropdown()" autocomplete="off">
+              <input type="hidden" id="initOrgFilter" value="">
+              <div id="initOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
             </div>
-            <div class="filter-spacer"></div>
-            <div class="filter-actions">
-              <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
-              <button class="btn" onclick="openModal('exportQRModal')">批量导出倡议</button>
-              <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
-            </div>
+            <div class="filter-sep"></div>
+            <span class="filter-label">倡议类型：</span>
+            <select id="initTypeFilter" onchange="renderInitiatives()" style="width:150px">
+              <option value="">全部类型</option>
+              <option value="unified">统一倡议</option>
+              <option value="custom">下级自定义倡议</option>
+            </select>
           </div>
           <div class="draft-panel" id="draftPanel"><div class="draft-list"></div></div>
           <!-- 倡议列表（表格） -->
@@ -155,13 +153,12 @@
               <table class="data-table init-list-table">
                 <thead>
                   <tr>
-                    <th style="width:48px"></th>
                     <th>倡议内容</th>
                     <th style="width:110px">倡议类型</th>
-                    <th style="width:100px">活动地址</th>
+                    <th style="width:130px">活动地址</th>
                     <th style="width:90px" onclick="sortInitList('orgCount')" class="sortable">组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
-                    <th style="width:90px" onclick="sortInitList('postCount')" class="sortable">发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
-                    <th style="width:90px">待审核</th>
+                    <th style="width:110px" onclick="sortInitList('postCount')" class="sortable">帖子发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
+                    <th style="width:100px" onclick="sortInitList('memberCount')" class="sortable">参与人数 <span class="sort-arrow" data-key="memberCount">⇅</span></th>
                     <th style="width:110px">创建时间</th>
                     <th style="width:120px">操作</th>
                   </tr>
@@ -172,11 +169,11 @@
           </div>
         </div>
 
-        <!-- ===== Tab2：组织发起数据 ===== -->
+        <!-- ===== Tab2：组织数据 ===== -->
         <div class="init-main-panel" id="initPanel-orgdata" style="display:none">
           <div class="filter-bar">
             <span class="filter-label">组织/负责人：</span>
-            <input type="text" id="orgDataSearch" placeholder="输入组织名称或负责人，支持模糊搜索" style="width:240px" oninput="renderOrgDataTable()">
+            <input type="text" id="orgDataSearch" placeholder="输入组织名称或负责人" style="width:240px" oninput="renderOrgDataTable()">
             <div class="filter-sep"></div>
             <span class="filter-label">层级</span>
             <select id="orgDataLevelFilter" onchange="renderOrgDataTable()" style="width:140px">
@@ -250,8 +247,8 @@
           </div>
         </div>
 
-        <!-- 顶部统计卡：保持独立 -->
-        <div class="topic-stats topic-stats-card">
+        <!-- 顶部统计卡：保持独立（自定义倡议时隐藏） -->
+        <div class="topic-stats topic-stats-card" id="topicStatsCard">
           <div class="stat-item"><div class="num" id="topicOrgCount">25</div><div class="lbl">发起组织数（本级+下级）</div></div>
           <div class="stat-item"><div class="num" id="topicUserCount">1,234</div><div class="lbl">参与人数</div></div>
           <div class="stat-item"><div class="num" id="topicPostCount">5,234</div><div class="lbl">发帖数</div></div>
@@ -504,26 +501,15 @@
   <div class="modal">
     <div class="modal-header"><h3>批量创建组织</h3><button class="modal-close" onclick="closeModal('importOrgModal')">✕</button></div>
     <div class="modal-body">
-      <div style="background:#F6FFED;border:1px solid #B7EB8F;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
-        <p style="font-size:12px;color:var(--text-secondary);line-height:1.7">
-          每行填写一条从一级到末级的完整组织链路，系统自动按名称识别层级并创建/复用。<br>
-          每行第一位人员即该组织<strong>负责人</strong>，其余为普通工作人员。
+      <div style="background:#F6FFED;border:1px solid #B7EB8F;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+        <p style="font-size:13px;font-weight:600;color:#389E0D;margin-bottom:6px">批量导入组织说明：</p>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin:0">
+          ·每行填写从一级到末级的完整组织链路，系统自动识别层级并创建/复用。<br>
+          ·组织负责人信息填写在第一位。
         </p>
       </div>
-      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px">
-        <table class="data-table" style="font-size:11px;min-width:780px">
-          <thead><tr>
-            <th>一级组织</th><th>二级组织</th><th>三级组织</th><th>四级组织</th><th>五级组织</th>
-            <th>负责人姓名</th><th>负责人手机号</th><th>工作人员2姓名</th><th>工作人员2手机号</th>
-          </tr></thead>
-          <tbody>
-            <tr><td>阳光基金会</td><td>华东分会</td><td>社区A队</td><td>浦东街道服务站</td><td>世纪村志愿组</td><td>周晓</td><td>13600004444</td><td>李雷</td><td>13700008888</td></tr>
-            <tr><td>阳光基金会</td><td>华东分会</td><td>社区B队</td><td></td><td></td><td>赵六</td><td>13600003456</td><td></td><td></td></tr>
-          </tbody>
-        </table>
-      </div>
       <div style="text-align:center;padding:16px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
-        <p style="font-size:13px;margin-bottom:8px">模板已内置上表示例，下载后按格式填写即可</p>
+        <p style="font-size:13px;margin-bottom:8px">模板已内置示例，下载后按格式填写即可</p>
         <a class="btn-link" onclick="downloadOrgTemplate()">下载 Excel 模板（含示例）</a>
       </div>
       <div style="text-align:center;padding:24px;background:#FAFAFA;border-radius:var(--radius);border:2px dashed var(--border);cursor:pointer;position:relative" id="importDropZone">

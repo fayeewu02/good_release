@@ -128,6 +128,7 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .data-table th.sort-asc .sort-arrow,.data-table th.sort-desc .sort-arrow{color:var(--primary);font-weight:700}
 
 /* 倡议列表表格 */
+.init-action-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .init-list-table .init-cover-thumb{width:40px;height:40px;border-radius:var(--radius);flex-shrink:0;background-size:cover;background-position:center}
 .init-list-table .init-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4}
 .init-list-table .init-type-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap}

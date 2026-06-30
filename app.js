@@ -895,28 +895,35 @@ function renderInitiatives() {
     return (va > vb ? 1 : -1) * (asc ? 1 : -1);
   });
   if (sorted.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-hint)">没有找到匹配的倡议</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-hint)">没有找到匹配的倡议</td></tr>`;
   } else {
     tbody.innerHTML = sorted.map(i => {
-      const pendingCount = DATA.posts.filter(p => p.initId === i.id && p.status === 'pending').length;
       const isCustom = !!i.customByChild;
       const typeTag = isCustom
         ? '<span class="init-type-tag init-type-custom">下级自定义</span>'
         : '<span class="init-type-tag init-type-unified">统一倡议</span>';
       const titleText = isCustom ? (i.remark || i.title || '下级自定义倡议') : i.title;
       const locationText = isCustom ? '—' : (i.location || '不限');
+      // 参与人数：根据帖子去重统计，若无则按发帖数 * 0.6 估算
+      const usersSet = new Set(DATA.posts.filter(p => p.initId === i.id).map(p => p.user));
+      const memberCount = usersSet.size > 0 ? usersSet.size : Math.max(0, Math.round((i.postCount || 0) * 0.6));
+      i.memberCount = memberCount; // 写回方便排序
       return `
       <tr style="cursor:pointer" onclick="switchToTopic(${i.id})">
-        <td><div class="init-cover-thumb" style="background:${i.color}"></div></td>
         <td>
-          <div class="init-title">${titleText}</div>
-          ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="init-cover-thumb" style="background:${i.color};width:28px;height:28px"></div>
+            <div>
+              <div class="init-title">${titleText}</div>
+              ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
+            </div>
+          </div>
         </td>
         <td>${typeTag}</td>
         <td style="font-size:12px;color:var(--text-secondary)">${locationText}</td>
         <td>${i.orgCount}</td>
         <td>${i.postCount.toLocaleString()}</td>
-        <td>${pendingCount > 0 ? `<span class="pending-text-badge">${pendingCount}</span>` : '<span style="color:var(--text-hint)">—</span>'}</td>
+        <td>${memberCount.toLocaleString()}</td>
         <td style="font-size:12px;color:var(--text-secondary)">${i.createDate}</td>
         <td class="actions-cell" onclick="event.stopPropagation()">
           <a class="btn-link" onclick="switchToTopic(${i.id})">查看</a>
@@ -1441,9 +1448,19 @@ function switchToTopic(initId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-topic').classList.add('active');
   document.getElementById('topicTitle').textContent = init.customByChild ? (init.remark || init.title) : init.title;
-  document.getElementById('topicDesc').textContent = init.customByChild
-    ? `下级自定义倡议 · 由 ${init.orgCount || 0} 个下级组织自行发起`
-    : (init.desc || (init.location ? '📍 ' + init.location : '不限活动地点'));
+  // 自定义倡议：隐藏描述行 + 顶部统计卡
+  const descEl = document.getElementById('topicDesc');
+  const statsCard = document.getElementById('topicStatsCard');
+  if (init.customByChild) {
+    if (descEl) descEl.style.display = 'none';
+    if (statsCard) statsCard.style.display = 'none';
+  } else {
+    if (descEl) {
+      descEl.style.display = '';
+      descEl.textContent = init.desc || (init.location ? '📍 ' + init.location : '不限活动地点');
+    }
+    if (statsCard) statsCard.style.display = '';
+  }
   // 自定义倡议显示"下级倡议管理"Tab
   const childTab = document.getElementById('topicTabChildInit');
   if (childTab) childTab.style.display = init.customByChild ? '' : 'none';
