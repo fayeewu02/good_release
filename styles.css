@@ -115,6 +115,16 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 /* 仅查看·层级多选筛选 */
 .level-filter{position:relative;display:inline-block}
 .level-filter>input{padding:6px 26px 6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--card);color:var(--text);outline:none;height:32px;width:160px;cursor:pointer}
+
+/* 体系管理筛选条：字号缩小、保持单行不换行 */
+#page-org>.filter-bar{flex-wrap:nowrap;gap:8px;padding:10px 14px}
+#page-org>.filter-bar .filter-label{font-size:12px}
+#page-org>.filter-bar input[type="text"]{font-size:12px;height:30px;padding:5px 10px}
+#page-org>.filter-bar .org-cascader>input{font-size:12px;height:30px;width:200px;padding:5px 22px 5px 10px}
+#page-org>.filter-bar .level-filter>input{font-size:12px;height:30px;width:140px;padding:5px 22px 5px 10px}
+#page-org>.filter-bar .filter-sep{margin:0 2px;height:18px}
+#page-org>.filter-bar #orgSearch{width:180px}
+#page-org>.filter-bar .filter-actions .btn{font-size:12px;padding:5px 10px;height:30px}
 .level-filter>input:focus{border-color:var(--primary)}
 .level-filter-panel{position:absolute;top:calc(100% + 4px);left:0;min-width:160px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:30;padding:4px 0}
 .level-filter-opt{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap}
