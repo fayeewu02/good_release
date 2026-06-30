@@ -92,6 +92,23 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .layer-1{background:#E6F7FF;color:#1890FF}
 .layer-2{background:#FFF7E6;color:#FA8C16}
 .layer-3{background:#F6FFED;color:#52C41A}
+.layer-4{background:#F9F0FF;color:#722ED1}
+.layer-5{background:#FFF0F6;color:#EB2F96}
+
+/* ===== 组织层级级联选择器 ===== */
+.org-cascader{position:relative;display:inline-block}
+.org-cascader>input{padding:6px 26px 6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--card);color:var(--text);outline:none;height:32px;width:240px;cursor:pointer}
+.org-cascader>input:focus{border-color:var(--primary)}
+.org-cascader-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-hint);cursor:pointer;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%}
+.org-cascader-clear:hover{background:#F0F0F0;color:var(--text)}
+.org-cascader-panel{position:absolute;top:calc(100% + 4px);left:0;display:flex;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:30;overflow:hidden}
+.org-cascader-col{min-width:150px;max-height:240px;overflow-y:auto;border-right:1px solid #F0F0F0;padding:4px 0}
+.org-cascader-col:last-child{border-right:none}
+.org-cascader-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text)}
+.org-cascader-item:hover{background:var(--primary-light)}
+.org-cascader-item.active{background:var(--primary-light);color:var(--primary);font-weight:500}
+.org-cascader-item .arrow{font-size:11px;color:var(--text-hint)}
+.org-cascader-empty{padding:12px;font-size:12px;color:var(--text-hint);text-align:center;min-width:120px}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .stat-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
@@ -315,3 +332,16 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 /* 组织管理删除确认弹出 */
 .org-mgmt-confirm{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:220;display:none;align-items:center;justify-content:center}
 .org-mgmt-confirm.show{display:flex}
+
+/* ===== 帖子详情多图轮播 ===== */
+.detail-carousel{position:relative;height:200px;border-radius:var(--radius);overflow:hidden;margin-bottom:14px;background:#F0F0F0}
+.detail-carousel-track{display:flex;height:100%;transition:transform .3s ease}
+.detail-carousel-slide{flex:0 0 100%;width:100%;height:100%}
+.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.4);color:#fff;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;z-index:2}
+.carousel-arrow:hover{background:rgba(0,0,0,.65)}
+.carousel-prev{left:8px}
+.carousel-next{right:8px}
+.carousel-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:2}
+.carousel-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55);cursor:pointer;transition:all .15s}
+.carousel-dot.active{background:#fff;width:18px;border-radius:4px}
+.carousel-counter{position:absolute;top:8px;right:10px;background:rgba(0,0,0,.45);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;z-index:2}

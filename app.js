@@ -1,20 +1,23 @@
 // ===== 全局数据 =====
 const DATA = {
+  // 组织支持最多 5 级（省-市-县-街道-村）。parents 数组记录完整上级链路（不含自身）。
   orgs: [
-    {id:'ORG001',name:'阳光基金会',level:1,parent1:'—',parent2:'—',memberCount:356,leader:'张三',phone:'13812341234',initCount:5,postCount:1200,location:'上海市浦东新区'},
-    {id:'ORG002',name:'华东分会',level:2,parent1:'阳光基金会',parent2:'—',memberCount:120,leader:'李四',phone:'13956785678',initCount:3,postCount:450,location:'南京市鼓楼区'},
-    {id:'ORG003',name:'社区A队',level:3,parent1:'阳光基金会',parent2:'华东分会',memberCount:45,leader:'王五',phone:'13790129012',initCount:2,postCount:180,location:'杭州市西湖区'},
-    {id:'ORG004',name:'社区B队',level:3,parent1:'阳光基金会',parent2:'华东分会',memberCount:38,leader:'赵六',phone:'13634563456',initCount:2,postCount:95,location:'合肥市蜀山区'},
-    {id:'ORG005',name:'绿色家园',level:1,parent1:'—',parent2:'—',memberCount:210,leader:'孙七',phone:'13578907890',initCount:4,postCount:680,location:'北京市海淀区'},
-    {id:'ORG006',name:'华南分会',level:2,parent1:'绿色家园',parent2:'—',memberCount:88,leader:'钱八',phone:'13423452345',initCount:3,postCount:320,location:'广州市天河区'},
-    {id:'ORG007',name:'华西分会',level:2,parent1:'阳光基金会',parent2:'—',memberCount:95,leader:'周九',phone:'13712349876',initCount:3,postCount:380,location:'成都市武侯区'},
-    {id:'ORG008',name:'社区C队',level:3,parent1:'阳光基金会',parent2:'华西分会',memberCount:32,leader:'吴十',phone:'13823456789',initCount:1,postCount:110,location:'重庆市渝中区'},
-    {id:'ORG009',name:'爱心联盟',level:1,parent1:'—',parent2:'—',memberCount:278,leader:'郑强',phone:'13934567890',initCount:6,postCount:920,location:'深圳市南山区'},
-    {id:'ORG010',name:'华北分会',level:2,parent1:'爱心联盟',parent2:'—',memberCount:102,leader:'冯丽',phone:'13645678234',initCount:4,postCount:410,location:'天津市和平区'},
-    {id:'ORG011',name:'志愿先锋队',level:3,parent1:'爱心联盟',parent2:'华北分会',memberCount:41,leader:'陈磊',phone:'13756789345',initCount:2,postCount:165,location:'石家庄市裕华区'},
-    {id:'ORG012',name:'社区D队',level:3,parent1:'绿色家园',parent2:'华南分会',memberCount:29,leader:'黄静',phone:'13867890456',initCount:1,postCount:78,location:'佛山市禅城区'}
+    {id:'ORG001',name:'阳光基金会',level:1,parents:[],parent1:'—',parent2:'—',parent3:'—',parent4:'—',leader:'张三',phone:'13812341234',initCount:5,postCount:1200,location:'上海市浦东新区'},
+    {id:'ORG002',name:'华东分会',level:2,parents:['阳光基金会'],parent1:'阳光基金会',parent2:'—',parent3:'—',parent4:'—',leader:'李四',phone:'13956785678',initCount:3,postCount:450,location:'南京市鼓楼区'},
+    {id:'ORG003',name:'社区A队',level:3,parents:['阳光基金会','华东分会'],parent1:'阳光基金会',parent2:'华东分会',parent3:'—',parent4:'—',leader:'王五',phone:'13790129012',initCount:2,postCount:180,location:'杭州市西湖区'},
+    {id:'ORG004',name:'社区B队',level:3,parents:['阳光基金会','华东分会'],parent1:'阳光基金会',parent2:'华东分会',parent3:'—',parent4:'—',leader:'赵六',phone:'13634563456',initCount:2,postCount:95,location:'合肥市蜀山区'},
+    {id:'ORG005',name:'绿色家园',level:1,parents:[],parent1:'—',parent2:'—',parent3:'—',parent4:'—',leader:'孙七',phone:'13578907890',initCount:4,postCount:680,location:'北京市海淀区'},
+    {id:'ORG006',name:'华南分会',level:2,parents:['绿色家园'],parent1:'绿色家园',parent2:'—',parent3:'—',parent4:'—',leader:'钱八',phone:'13423452345',initCount:3,postCount:320,location:'广州市天河区'},
+    {id:'ORG007',name:'华西分会',level:2,parents:['阳光基金会'],parent1:'阳光基金会',parent2:'—',parent3:'—',parent4:'—',leader:'周九',phone:'13712349876',initCount:3,postCount:380,location:'成都市武侯区'},
+    {id:'ORG008',name:'社区C队',level:3,parents:['阳光基金会','华西分会'],parent1:'阳光基金会',parent2:'华西分会',parent3:'—',parent4:'—',leader:'吴十',phone:'13823456789',initCount:1,postCount:110,location:'重庆市渝中区'},
+    {id:'ORG009',name:'爱心联盟',level:1,parents:[],parent1:'—',parent2:'—',parent3:'—',parent4:'—',leader:'郑强',phone:'13934567890',initCount:6,postCount:920,location:'深圳市南山区'},
+    {id:'ORG010',name:'华北分会',level:2,parents:['爱心联盟'],parent1:'爱心联盟',parent2:'—',parent3:'—',parent4:'—',leader:'冯丽',phone:'13645678234',initCount:4,postCount:410,location:'天津市和平区'},
+    {id:'ORG011',name:'志愿先锋队',level:3,parents:['爱心联盟','华北分会'],parent1:'爱心联盟',parent2:'华北分会',parent3:'—',parent4:'—',leader:'陈磊',phone:'13756789345',initCount:2,postCount:165,location:'石家庄市裕华区'},
+    {id:'ORG012',name:'社区D队',level:3,parents:['绿色家园','华南分会'],parent1:'绿色家园',parent2:'华南分会',parent3:'—',parent4:'—',leader:'黄静',phone:'13867890456',initCount:1,postCount:78,location:'佛山市禅城区'},
+    {id:'ORG013',name:'浦东街道服务站',level:4,parents:['阳光基金会','华东分会','社区A队'],parent1:'阳光基金会',parent2:'华东分会',parent3:'社区A队',parent4:'—',leader:'孙明',phone:'13511112222',initCount:1,postCount:46,location:'上海市浦东新区世纪大道'},
+    {id:'ORG014',name:'世纪村志愿组',level:5,parents:['阳光基金会','华东分会','社区A队','浦东街道服务站'],parent1:'阳光基金会',parent2:'华东分会',parent3:'社区A队',parent4:'浦东街道服务站',leader:'周晓',phone:'13633334444',initCount:1,postCount:18,location:'上海市浦东新区世纪村'}
   ],
-  nextOrgId: 13,
+  nextOrgId: 15,
   initiatives: [
     {id:1,title:'社区清洁日',desc:'号召社区居民一起打扫公共区域，美化社区环境。拍照记录你的清洁行动！',color:'linear-gradient(135deg,#06B57A,#34D399)',orgCount:25,postCount:5234,createDate:'2026-06-10',isDraft:false},
     {id:2,title:'关爱独居老人',desc:'探访社区独居老人，陪伴聊天、帮助采购。用镜头记录温暖瞬间。',color:'linear-gradient(135deg,#FF8C42,#FBBF24)',orgCount:18,postCount:3890,createDate:'2026-06-05',isDraft:false},
@@ -25,17 +28,30 @@ const DATA = {
     {id:7,title:'社区读书会',desc:'每周组织一次社区读书分享活动。',color:'linear-gradient(135deg,#E67E22,#F39C12)',orgCount:0,postCount:0,createDate:'2026-06-22',isDraft:true}
   ],
   nextInitId: 8,
+  // 邀请下级发起记录（无统一主题，主题由下级自行填写）
+  invitations: [
+    {id:1, levelScope:'all2', scopeText:'全部二级组织', inviteOrgs:['华东分会','华南分会','华北分会'], createDate:'2026-06-18', status:'进行中',
+      responses:[
+        {org:'华东分会', title:'河岸清洁志愿行动', location:'上海黄浦江畔', date:'2026-06-19', posts:42},
+        {org:'华南分会', title:'社区垃圾分类宣传', location:'广州天河区', date:'2026-06-20', posts:30}
+      ]},
+    {id:2, levelScope:'all3', scopeText:'全部三级组织', inviteOrgs:['社区A队','社区B队'], createDate:'2026-06-22', status:'进行中',
+      responses:[
+        {org:'社区A队', title:'楼道公共空间整理', location:'本社区', date:'2026-06-23', posts:15}
+      ]}
+  ],
+  nextInviteId: 3,
   // 帖子数据（用于倡议话题页）
   posts: [
-    {id:1,initId:1,text:'今天和邻居们一起打扫了小区花园，大家忙得热火朝天...',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-25 10:30',color:'linear-gradient(135deg,#A8E6CF,#DCEDC1)',status:'showing'},
-    {id:2,initId:1,text:'带着孩子一起捡拾公园里的垃圾，言传身教最重要！',user:'微信用户B',org:'华东分会',orgLevel:2,date:'2026-06-25 09:15',color:'linear-gradient(135deg,#FFD3B6,#FFAAA5)',status:'showing'},
-    {id:3,initId:1,text:'社区清洁日第三天，楼道焕然一新，大家都说好！',user:'微信用户C',org:'社区A队',orgLevel:3,date:'2026-06-24 16:20',color:'linear-gradient(135deg,#B5EAD7,#C7CEEA)',status:'showing'},
+    {id:1,initId:1,text:'今天和邻居们一起打扫了小区花园，大家忙得热火朝天...',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-25 10:30',color:'linear-gradient(135deg,#A8E6CF,#DCEDC1)',images:['linear-gradient(135deg,#A8E6CF,#DCEDC1)','linear-gradient(135deg,#B5EAD7,#C7CEEA)','linear-gradient(135deg,#E2F0CB,#FFDAC1)'],status:'showing'},
+    {id:2,initId:1,text:'带着孩子一起捡拾公园里的垃圾，言传身教最重要！',user:'微信用户B',org:'华东分会',orgLevel:2,date:'2026-06-25 09:15',color:'linear-gradient(135deg,#FFD3B6,#FFAAA5)',images:['linear-gradient(135deg,#FFD3B6,#FFAAA5)','linear-gradient(135deg,#FFDAB9,#FFE4B5)'],status:'showing'},
+    {id:3,initId:1,text:'社区清洁日第三天，楼道焕然一新，大家都说好！',user:'微信用户C',org:'社区A队',orgLevel:3,date:'2026-06-24 16:20',color:'linear-gradient(135deg,#B5EAD7,#C7CEEA)',images:['linear-gradient(135deg,#B5EAD7,#C7CEEA)','linear-gradient(135deg,#C5CAE9,#7986CB)','linear-gradient(135deg,#BBDEFB,#90CAF9)','linear-gradient(135deg,#B2DFDB,#80CBC4)'],status:'showing'},
     {id:4,initId:1,text:'整理了社区活动室的书架，给图书重新分类整理。',user:'微信用户D',org:'社区B队',orgLevel:3,date:'2026-06-24 14:50',color:'linear-gradient(135deg,#E2F0CB,#FFDAC1)',status:'showing'},
     {id:5,initId:1,text:'周末参加了河边清理活动，捡了两大袋垃圾...',user:'微信用户E',org:'华南分会',orgLevel:2,date:'2026-06-26 08:30',color:'linear-gradient(135deg,#FFDAB9,#FFE4B5)',status:'pending'},
     {id:6,initId:1,text:'和小伙伴们清理了学校周边的小路，走路舒服多了！',user:'微信用户F',org:'社区A队',orgLevel:3,date:'2026-06-26 07:45',color:'linear-gradient(135deg,#D4E2D4,#CAD2C5)',status:'pending'},
     {id:7,initId:1,text:'组织了小区垃圾分类宣传，发放了100份传单',user:'微信用户H',org:'阳光基金会',orgLevel:1,date:'2026-06-23 15:00',color:'linear-gradient(135deg,#C5CAE9,#7986CB)',status:'pending'},
-    {id:8,initId:1,text:'该帖子内容不符合社区规范...',user:'微信用户G',org:'华东分会',orgLevel:2,date:'2026-06-23 11:20',color:'#E8E8E8',status:'hidden'},
-    {id:9,initId:1,text:'广告内容，已隐藏处理。',user:'微信用户I',org:'社区B队',orgLevel:3,date:'2026-06-22 09:10',color:'#E8E8E8',status:'hidden'},
+    {id:8,initId:1,text:'该帖子内容不符合社区规范...',user:'微信用户G',org:'华东分会',orgLevel:2,date:'2026-06-23 11:20',color:'#E8E8E8',status:'hidden',hiddenBy:'ops'},
+    {id:9,initId:1,text:'广告内容，已隐藏处理。',user:'微信用户I',org:'社区B队',orgLevel:3,date:'2026-06-22 09:10',color:'#E8E8E8',status:'hidden',hiddenBy:'org'},
     {id:10,initId:1,text:'清理了社区健身步道旁的杂草，大家锻炼更安全了！',user:'微信用户J',org:'华西分会',orgLevel:2,date:'2026-06-25 14:20',color:'linear-gradient(135deg,#B2DFDB,#80CBC4)',status:'showing'},
     {id:11,initId:1,text:'和物业一起维修了楼道照明灯，现在晚上回家亮堂多了。',user:'微信用户K',org:'社区C队',orgLevel:3,date:'2026-06-24 11:45',color:'linear-gradient(135deg,#BBDEFB,#90CAF9)',status:'showing'},
     {id:12,initId:2,text:'给独居的张奶奶送了新鲜蔬菜，陪她聊了很久。',user:'微信用户A',org:'阳光基金会',orgLevel:1,date:'2026-06-24 09:30',color:'linear-gradient(135deg,#FFE0B2,#FFCC80)',status:'showing'},
@@ -234,26 +250,21 @@ function saveQRImage() {
 // 组织管理
 // ========================
 function getFilteredOrgs() {
-  const l1 = document.getElementById('filterL1')?.value || '';
-  const l2 = document.getElementById('filterL2')?.value || '';
-  const l3 = document.getElementById('filterL3')?.value || '';
+  const selName = document.getElementById('orgCascaderValue')?.value || '';
   const search = document.getElementById('orgSearch')?.value?.toLowerCase() || '';
-  const showL1 = document.getElementById('chkL1')?.checked ?? true;
-  const showL2 = document.getElementById('chkL2')?.checked ?? true;
-  const showL3 = document.getElementById('chkL3')?.checked ?? true;
 
   return DATA.orgs.filter(o => {
-    if (o.level === 1 && !showL1) return false;
-    if (o.level === 2 && !showL2) return false;
-    if (o.level === 3 && !showL3) return false;
-    if (l1 && o.level === 1 && o.name !== l1) return false;
-    if (l1 && o.level > 1 && o.parent1 !== l1) return false;
-    if (l2 && o.level === 2 && o.name !== l2) return false;
-    if (l2 && o.level > 2 && o.parent2 !== l2) return false;
-    if (l3 && o.level === 3 && o.name !== l3) return false;
+    // 级联筛选：选中某个组织时，展示该组织及其所有下级
+    if (selName && o.name !== selName && !(o.parents || []).includes(selName)) return false;
     if (search && !o.name.toLowerCase().includes(search) && !o.leader.toLowerCase().includes(search) && !o.id.toLowerCase().includes(search)) return false;
     return true;
   });
+}
+
+// 渲染上级组织路径
+function orgParentPath(o) {
+  if (!o.parents || o.parents.length === 0) return '<span style="color:var(--text-hint)">—</span>';
+  return o.parents.join(' / ');
 }
 
 function renderOrgTable() {
@@ -261,18 +272,18 @@ function renderOrgTable() {
   const tbody = document.getElementById('orgTableBody');
   if (!tbody) return;
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-hint)">没有找到匹配的组织</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-hint)">没有找到匹配的组织</td></tr>`;
+    document.getElementById('orgCount').textContent = `共 0 个组织`;
     return;
   }
   tbody.innerHTML = filtered.map(o => `
     <tr data-id="${o.id}">
       <td>${o.id}</td>
       <td style="font-weight:${o.level===1?'600':'400'}">${o.name}</td>
-      <td><span class="layer-tag layer-${o.level}">${['一','二','三'][o.level-1]}级</span></td>
-      <td>${o.parent1}</td><td>${o.parent2}</td>
-      <td>${o.memberCount}</td><td>${o.leader}</td><td>${o.phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</td>
+      <td><span class="layer-tag layer-${o.level}">${'一二三四五'[o.level-1]}级</span></td>
+      <td style="font-size:12px;color:var(--text-secondary)">${orgParentPath(o)}</td>
+      <td>${o.leader}</td><td>${o.phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</td>
       <td class="actions-cell">
-        <a class="btn-link" onclick="openShareQRModal('${o.id}','${o.name}')">分享二维码</a>
         <a class="btn-link" onclick="openEditOrgModal('${o.id}')">编辑</a>
         <a class="btn-link" onclick="switchToMember('${o.id}','${o.name}')">成员管理</a>
         <a class="btn-link btn-danger" onclick="confirmDeleteOrg('${o.id}')">删除</a>
@@ -281,22 +292,74 @@ function renderOrgTable() {
   document.getElementById('orgCount').textContent = `共 ${filtered.length} 个组织`;
 }
 
-function updateL2Options() {
-  const l1 = document.getElementById('filterL1').value;
-  const l2Select = document.getElementById('filterL2');
-  const l2Orgs = DATA.orgs.filter(o => o.level === 2 && (!l1 || o.parent1 === l1));
-  l2Select.innerHTML = '<option value="">全部</option>' + l2Orgs.map(o => `<option>${o.name}</option>`).join('');
-  l2Select.value = '';
-  updateL3Options();
+// ===== 组织层级级联选择器 =====
+let orgCascaderSel = []; // 已选路径（按层级的组织名称）
+
+function orgsForCascaderColumn(colIdx) {
+  const level = colIdx + 1;
+  const prefix = orgCascaderSel.slice(0, colIdx);
+  return DATA.orgs.filter(o => {
+    if (o.level !== level) return false;
+    if ((o.parents || []).length !== colIdx) return false;
+    for (let k = 0; k < colIdx; k++) { if (o.parents[k] !== prefix[k]) return false; }
+    return true;
+  });
 }
-function updateL3Options() {
-  const l1 = document.getElementById('filterL1').value;
-  const l2 = document.getElementById('filterL2').value;
-  const l3Select = document.getElementById('filterL3');
-  const l3Orgs = DATA.orgs.filter(o => o.level === 3 && (!l1 || o.parent1 === l1) && (!l2 || o.parent2 === l2));
-  l3Select.innerHTML = '<option value="">全部</option>' + l3Orgs.map(o => `<option>${o.name}</option>`).join('');
-  l3Select.value = '';
+
+function toggleOrgCascader(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('orgCascaderPanel');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'flex';
+  if (!open) renderOrgCascaderColumns();
 }
+
+function renderOrgCascaderColumns() {
+  const panel = document.getElementById('orgCascaderPanel');
+  let cols = '';
+  for (let i = 0; i < 5; i++) {
+    if (i > 0 && !orgCascaderSel[i - 1]) break;
+    const items = orgsForCascaderColumn(i);
+    if (items.length === 0) break;
+    cols += `<div class="org-cascader-col">` + items.map(o => {
+      const active = orgCascaderSel[i] === o.name;
+      const hasChild = DATA.orgs.some(x => x.level === o.level + 1 && (x.parents || [])[i] === o.name && x.parents.length === i + 1);
+      return `<div class="org-cascader-item ${active ? 'active' : ''}" onclick="selectOrgCascader(${i},'${o.name}')">
+        <span>${o.name}</span>${hasChild ? '<span class="arrow">›</span>' : ''}
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  panel.innerHTML = cols || `<div class="org-cascader-empty">暂无组织</div>`;
+}
+
+function selectOrgCascader(colIdx, name) {
+  orgCascaderSel = orgCascaderSel.slice(0, colIdx);
+  orgCascaderSel[colIdx] = name;
+  document.getElementById('orgCascaderValue').value = name;
+  document.getElementById('orgCascaderInput').value = orgCascaderSel.join(' / ');
+  document.getElementById('orgCascaderClear').style.display = 'block';
+  renderOrgCascaderColumns();
+  renderOrgTable();
+}
+
+function clearOrgCascader(e) {
+  if (e) e.stopPropagation();
+  orgCascaderSel = [];
+  document.getElementById('orgCascaderValue').value = '';
+  document.getElementById('orgCascaderInput').value = '';
+  document.getElementById('orgCascaderClear').style.display = 'none';
+  document.getElementById('orgCascaderPanel').style.display = 'none';
+  renderOrgTable();
+}
+
+// 点击其他区域关闭级联面板
+document.addEventListener('click', function(e) {
+  const cascader = document.getElementById('orgCascader');
+  if (cascader && !cascader.contains(e.target)) {
+    const panel = document.getElementById('orgCascaderPanel');
+    if (panel) panel.style.display = 'none';
+  }
+});
 
 function openCreateOrgModal() {
   document.getElementById('createOrgForm').reset();
@@ -345,14 +408,14 @@ function showParentDropdown() {
 
 function renderParentOrgDropdown(keyword) {
   const dropdown = document.getElementById('parentOrgDropdown');
-  const candidates = DATA.orgs.filter(o => o.level <= 2);
+  const candidates = DATA.orgs.filter(o => o.level <= 4);
   const filtered = keyword ? candidates.filter(o => o.name.toLowerCase().includes(keyword.toLowerCase())) : candidates;
   if (filtered.length === 0) {
     dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text-hint);text-align:center;">未找到匹配的组织</div>';
   } else {
     dropdown.innerHTML = filtered.map(o =>
-      `<div class="parent-org-option" style="padding:8px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;${o.level>1?'padding-left:28px':''}" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectParentOrg('${o.name}',${o.level})">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三'[o.level-1]}级</span>
+      `<div class="parent-org-option" style="padding:8px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;padding-left:${8+(o.level-1)*16}px" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectParentOrg('${o.name}',${o.level})">
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三四五'[o.level-1]}级</span>
         <span>${o.name}</span>
       </div>`
     ).join('');
@@ -365,14 +428,14 @@ function selectParentOrg(name, level) {
   document.getElementById('parentOrgDropdown').style.display = 'none';
   // 显示层级提示
   const newLevel = level + 1;
-  if (newLevel > 3) {
+  if (newLevel > 5) {
     document.getElementById('orgLevelHint').style.display = 'block';
-    document.getElementById('orgLevelHintText').textContent = '最多支持三级组织，请重新选择上级';
+    document.getElementById('orgLevelHintText').textContent = '最多支持五级组织，请重新选择上级';
     document.querySelector('#orgLevelHint > div').style.background = '#FFF2E8';
     document.querySelector('#orgLevelHint > div').style.color = '#D4380D';
   } else {
     document.getElementById('orgLevelHint').style.display = 'block';
-    document.getElementById('orgLevelHintText').textContent = `当前创建组织为${'一二三'[newLevel-1]}级组织`;
+    document.getElementById('orgLevelHintText').textContent = `当前创建组织为${'一二三四五'[newLevel-1]}级组织`;
     document.querySelector('#orgLevelHint > div').style.background = '#E6F7FF';
     document.querySelector('#orgLevelHint > div').style.color = '#1890FF';
   }
@@ -396,20 +459,21 @@ function submitCreateOrg() {
   const location = document.getElementById('newOrgLocation').value.trim();
   if (!name || !leader || !phone || !location) { showToast('请填写所有必填项'); return; }
   if (!isTopLevel && !parent) { showToast('请选择归属上级组织'); return; }
-  let level = 1, p1 = '—', p2 = '—';
+  let level = 1, parents = [];
   if (!isTopLevel && parent) {
     const pOrg = DATA.orgs.find(o => o.name === parent);
     if (!pOrg) { showToast('未找到所选上级组织'); return; }
     level = pOrg.level + 1;
-    if (level > 3) { showToast('最多支持三级组织'); return; }
-    p1 = pOrg.level === 1 ? pOrg.name : pOrg.parent1;
-    p2 = pOrg.level === 2 ? pOrg.name : (pOrg.level === 1 ? '—' : pOrg.parent2);
+    if (level > 5) { showToast('最多支持五级组织'); return; }
+    parents = [...(pOrg.parents || []), pOrg.name];
   }
-  const newOrg = {id:'ORG'+String(DATA.nextOrgId++).padStart(3,'0'),name,level,parent1:p1,parent2:p2,memberCount:0,leader,phone,initCount:0,postCount:0,location};
+  const p = ['—','—','—','—'];
+  parents.forEach((nm, i) => { p[i] = nm; });
+  const newOrg = {id:'ORG'+String(DATA.nextOrgId++).padStart(3,'0'),name,level,parents,parent1:p[0],parent2:p[1],parent3:p[2],parent4:p[3],leader,phone,initCount:0,postCount:0,location};
   DATA.orgs.push(newOrg);
   closeModal('createOrgModal');
   renderOrgTable();
-  showToast(`组织「${name}」创建成功（${'一二三'[level-1]}级组织）`);
+  showToast(`组织「${name}」创建成功（${'一二三四五'[level-1]}级组织）`);
 }
 
 function openEditOrgModal(id) {
@@ -422,10 +486,11 @@ function openEditOrgModal(id) {
   document.getElementById('editOrgLocation').value = o.location;
   const parentSelect = document.getElementById('editOrgParent');
   parentSelect.innerHTML = '<option value="">一级组织（无上级）</option>';
-  DATA.orgs.filter(x => x.level <= 2 && x.id !== id).forEach(x => {
-    parentSelect.innerHTML += `<option value="${x.name}">${x.name}</option>`;
+  DATA.orgs.filter(x => x.level <= 4 && x.id !== id).forEach(x => {
+    const indent = '　'.repeat(x.level - 1);
+    parentSelect.innerHTML += `<option value="${x.name}">${indent}${'一二三四五'[x.level-1]}级 · ${x.name}</option>`;
   });
-  const currentParent = o.level === 2 ? o.parent1 : o.level === 3 ? o.parent2 : '';
+  const currentParent = (o.parents && o.parents.length) ? o.parents[o.parents.length - 1] : '';
   parentSelect.value = currentParent || '';
   openModal('editOrgModal');
 }
@@ -438,8 +503,23 @@ function submitEditOrg() {
   const leader = document.getElementById('editOrgLeader').value.trim();
   const phone = document.getElementById('editOrgPhone').value.trim();
   const location = document.getElementById('editOrgLocation').value.trim();
+  const parentName = document.getElementById('editOrgParent').value;
   if (!name || !leader || !phone || !location) { showToast('请填写所有必填项'); return; }
+  // 处理上级变更 → 重新计算层级与上级链路
+  let level = 1, parents = [];
+  if (parentName) {
+    const pOrg = DATA.orgs.find(x => x.name === parentName);
+    if (!pOrg) { showToast('未找到所选上级组织'); return; }
+    if (pOrg.id === id) { showToast('上级组织不能是自己'); return; }
+    level = pOrg.level + 1;
+    if (level > 5) { showToast('最多支持五级组织'); return; }
+    parents = [...(pOrg.parents || []), pOrg.name];
+  }
+  const p = ['—','—','—','—'];
+  parents.forEach((nm, i) => { p[i] = nm; });
   o.name = name; o.leader = leader; o.phone = phone; o.location = location;
+  o.level = level; o.parents = parents;
+  o.parent1 = p[0]; o.parent2 = p[1]; o.parent3 = p[2]; o.parent4 = p[3];
   closeModal('editOrgModal');
   renderOrgTable();
   showToast(`组织「${name}」信息已更新`);
@@ -556,7 +636,7 @@ function getFilteredInitiatives() {
     if (i.isDraft) return false;
     if (dateFrom && i.createDate < dateFrom) return false;
     if (dateTo && i.createDate > dateTo) return false;
-    if (search && !i.title.toLowerCase().includes(search) && !i.desc.toLowerCase().includes(search)) return false;
+    if (search && !i.title.toLowerCase().includes(search) && !(i.desc||'').toLowerCase().includes(search)) return false;
     if (orgFilter) {
       // 根据帖子中关联的组织来筛选
       const initPosts = DATA.posts.filter(p => p.initId === i.id);
@@ -586,7 +666,7 @@ function renderInitOrgDropdown(keyword) {
   } else {
     dropdown.innerHTML = '<div style="padding:6px 12px;font-size:11px;color:var(--text-hint);cursor:pointer;border-bottom:1px solid #f0f0f0" onclick="selectInitOrg(\'\',\'\')">全部组织</div>' + filtered.map(o =>
       `<div style="padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectInitOrg('${o.name}','${o.name}')">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三'[o.level-1]}级</span>
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三四五'[o.level-1]}级</span>
         <span>${o.name}</span>
       </div>`
     ).join('');
@@ -614,13 +694,166 @@ function renderInitiatives() {
         </div>
         <div class="body">
           <h4>${i.title}</h4>
-          <div class="desc">${i.desc}</div>
+          <div class="desc">${i.location ? '📍 ' + i.location : (i.desc || '不限活动地点')}</div>
           <div class="foot"><div class="metrics"><span>${i.orgCount}个组织</span><span>${i.postCount.toLocaleString()}条</span>${pendingCount > 0 ? `<span class="pending-text-badge">${pendingCount}条待审核</span>` : ''}</div><a class="btn-link" onclick="event.stopPropagation();openEditInitModal(${i.id})" style="font-size:12px">编辑</a></div>
         </div>
       </div>`;
     }).join('');
   }
   renderDrafts();
+}
+
+/* ============ 好事发布器双Tab：统一倡议管理 / 邀请下级发起管理 ============ */
+let currentInitMainTab = 'unified';
+function switchInitMainTab(tab) {
+  currentInitMainTab = tab;
+  document.querySelectorAll('#initMainTabs .tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.inittab === tab);
+  });
+  const unified = document.getElementById('initPanel-unified');
+  const invite = document.getElementById('initPanel-invite');
+  if (unified) unified.style.display = tab === 'unified' ? 'block' : 'none';
+  if (invite) invite.style.display = tab === 'invite' ? 'block' : 'none';
+  if (tab === 'invite') renderInviteList();
+}
+
+/* ---- 邀请记录列表（Tab2） ---- */
+function renderInviteList() {
+  const wrap = document.getElementById('inviteList');
+  if (!wrap) return;
+  const statusFilter = document.getElementById('inviteStatusFilter')?.value || '';
+  const list = (DATA.invitations || []).filter(v => !statusFilter || v.status === statusFilter);
+  if (list.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><p>暂无邀请记录，点击「批量邀请下级发起倡议」开始</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+      <th>邀请批次</th><th>邀请层级范围</th><th>被邀请组织数</th><th>已响应</th><th>累计发布</th><th>发起时间</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody>${list.map(v => {
+      const inviteCount = (v.inviteOrgs || []).length;
+      const respCount = (v.responses || []).length;
+      const postSum = (v.responses || []).reduce((s, r) => s + (r.posts || 0), 0);
+      const statusClass = v.status === '进行中' ? 'color:#1677FF' : 'color:var(--text-hint)';
+      return `<tr>
+        <td>第 ${v.id} 批邀请</td>
+        <td>${v.scopeText}</td>
+        <td>${inviteCount}</td>
+        <td>${respCount} / ${inviteCount}</td>
+        <td>${postSum.toLocaleString()} 条</td>
+        <td>${v.createDate}</td>
+        <td style="${statusClass}">${v.status}</td>
+        <td>
+          <a class="btn-link" onclick="viewInviteDetail(${v.id})">查看响应</a>
+          <a class="btn-link" onclick="exportInviteQR(${v.id})" style="margin-left:8px">导出二维码</a>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function viewInviteDetail(id) {
+  const v = (DATA.invitations || []).find(x => x.id === id);
+  if (!v) return;
+  const responded = v.responses || [];
+  const respondedOrgs = responded.map(r => r.org);
+  const pending = (v.inviteOrgs || []).filter(o => !respondedOrgs.includes(o));
+  const body = document.getElementById('inviteDetailBody');
+  body.innerHTML = `
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+      <strong>邀请层级范围：</strong>${v.scopeText} ｜ <strong>发起时间：</strong>${v.createDate} ｜ <strong>状态：</strong>${v.status}
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">已响应（下级自行填写主题）</div>
+    ${responded.length ? `<table class="data-table" style="margin-bottom:16px"><thead><tr><th>下级组织</th><th>倡议主题</th><th>活动地点</th><th>发布数</th><th>响应时间</th></tr></thead><tbody>${responded.map(r => `<tr><td>${r.org}</td><td>${r.title}</td><td>${r.location || '不限'}</td><td>${r.posts}</td><td>${r.date}</td></tr>`).join('')}</tbody></table>` : `<div style="font-size:12px;color:var(--text-hint);margin-bottom:16px">暂无下级响应</div>`}
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">待响应（${pending.length}）</div>
+    ${pending.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${pending.map(o => `<span style="font-size:12px;background:#FFF7E6;color:#D46B08;border:1px solid #FFD591;padding:3px 10px;border-radius:12px">${o}</span>`).join('')}</div>` : `<div style="font-size:12px;color:var(--text-hint)">全部已响应</div>`}
+  `;
+  openModal('inviteDetailModal');
+}
+
+function exportInviteQR(id) {
+  const v = (DATA.invitations || []).find(x => x.id === id);
+  if (!v) return;
+  showToast(`正在导出第 ${v.id} 批邀请的 ${(v.inviteOrgs||[]).length} 个组织邀请二维码...`);
+  setTimeout(() => showToast(`邀请发起倡议二维码 Excel 已下载（${(v.inviteOrgs||[]).length} 个组织）`), 1200);
+}
+
+function exportAllInviteQR() {
+  const total = (DATA.invitations || []).reduce((s, v) => s + (v.inviteOrgs || []).length, 0);
+  if (total === 0) { showToast('暂无邀请记录可导出'); return; }
+  showToast('正在导出全部邀请二维码...');
+  setTimeout(() => showToast(`邀请发起倡议二维码 Excel 已下载（共 ${total} 个组织）`), 1200);
+}
+
+/* ---- 批量邀请下级发起倡议弹窗 ---- */
+let lastInviteBatch = null;
+function openInviteModal() {
+  const sel = document.getElementById('inviteLevelScope');
+  if (sel) sel.value = '';
+  const search = document.getElementById('inviteOrgSearch');
+  if (search) search.value = '';
+  const cb = document.getElementById('inviteSelectAllCb');
+  if (cb) cb.checked = true;
+  renderInviteOrgList();
+  openModal('inviteModal');
+}
+
+function inviteScopeLevel(scope) {
+  // all2 → 2, all3 → 3 ...
+  return scope ? parseInt(scope.replace('all', '')) : 0;
+}
+
+function renderInviteOrgList() {
+  const wrap = document.getElementById('inviteOrgList');
+  if (!wrap) return;
+  const scope = document.getElementById('inviteLevelScope')?.value || '';
+  const kw = (document.getElementById('inviteOrgSearch')?.value || '').trim().toLowerCase();
+  if (!scope) {
+    wrap.innerHTML = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-hint)">请先选择邀请层级范围</div>`;
+    return;
+  }
+  const lv = inviteScopeLevel(scope);
+  let orgs = DATA.orgs.filter(o => o.level === lv);
+  if (kw) orgs = orgs.filter(o => o.name.toLowerCase().includes(kw));
+  if (orgs.length === 0) {
+    wrap.innerHTML = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-hint)">该层级暂无组织</div>`;
+    return;
+  }
+  wrap.innerHTML = orgs.map(o => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="invite-org-cb" value="${o.name}" checked style="accent-color:#1890FF">
+      <span>${'一二三四五'[o.level-1]}级 · ${o.name}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-hint)">${orgParentPath(o)}</span>
+    </label>`).join('');
+}
+
+function toggleAllInviteOrgs(checked) {
+  document.querySelectorAll('#inviteOrgList .invite-org-cb').forEach(cb => cb.checked = checked);
+}
+
+function submitInvite() {
+  const scope = document.getElementById('inviteLevelScope')?.value || '';
+  if (!scope) { showToast('请选择邀请层级范围'); return; }
+  const checked = Array.from(document.querySelectorAll('#inviteOrgList .invite-org-cb:checked')).map(cb => cb.value);
+  if (checked.length === 0) { showToast('请至少勾选一个被邀请组织'); return; }
+  const scopeTextMap = { all2:'全部二级组织', all3:'全部三级组织', all4:'全部四级组织', all5:'全部五级组织' };
+  const record = {
+    id: DATA.nextInviteId++,
+    levelScope: scope,
+    scopeText: scopeTextMap[scope] || '下级组织',
+    inviteOrgs: checked,
+    createDate: new Date().toISOString().slice(0,10),
+    status: '进行中',
+    responses: []
+  };
+  DATA.invitations.unshift(record);
+  lastInviteBatch = record;
+  closeModal('inviteModal');
+  document.getElementById('inviteSuccessCount').textContent = checked.length;
+  openModal('inviteSuccessModal');
+  if (currentInitMainTab === 'invite') renderInviteList();
+}
+
+function exportLastInviteQR() {
+  if (lastInviteBatch) exportInviteQR(lastInviteBatch.id);
 }
 
 function renderDrafts() {
@@ -640,7 +873,7 @@ function renderDrafts() {
       </div>
       <div class="body">
         <h4>${d.title}</h4>
-        <div class="desc">${d.desc || '暂无描述'}</div>
+        <div class="desc">${d.location ? '📍 ' + d.location : (d.desc || '不限活动地点')}</div>
         <div class="foot">
           <span style="font-size:11px;color:var(--text-hint)">创建于 ${d.createDate}</span>
           <div style="display:flex;gap:8px">
@@ -670,7 +903,6 @@ function editDraft(id) {
   const d = DATA.initiatives.find(i => i.id === id);
   if (!d) return;
   document.getElementById('createInitTitle').value = d.title;
-  document.getElementById('createInitDesc').value = d.desc;
   document.getElementById('createInitLocation').value = d.location || '';
   document.getElementById('createInitEditId').value = d.id;
   document.getElementById('createInitModalTitle').textContent = '编辑草稿';
@@ -715,9 +947,8 @@ function handleCoverUpload(input) {
 
 function submitCreateInit() {
   const title = document.getElementById('createInitTitle').value.trim();
-  const desc = document.getElementById('createInitDesc').value.trim();
   const location = document.getElementById('createInitLocation')?.value?.trim() || '';
-  if (!title || !desc) { showToast('请填写倡议主题和说明'); return; }
+  if (!title) { showToast('请填写倡议主题'); return; }
   const editId = document.getElementById('createInitEditId').value;
   const colors = ['linear-gradient(135deg,#06B57A,#34D399)','linear-gradient(135deg,#FF8C42,#FBBF24)','linear-gradient(135deg,#4A90D9,#60A5FA)','linear-gradient(135deg,#9B59B6,#8E44AD)','linear-gradient(135deg,#E67E22,#F39C12)','linear-gradient(135deg,#1ABC9C,#16A085)'];
   const isBatch = document.getElementById('batchSwitch').checked;
@@ -726,11 +957,11 @@ function submitCreateInit() {
 
   if (editId) {
     const existing = DATA.initiatives.find(i => i.id === parseInt(editId));
-    if (existing) { existing.title = title; existing.desc = desc; existing.location = location; existing.isDraft = false; existing.orgCount = orgCount; }
+    if (existing) { existing.title = title; existing.location = location; existing.isDraft = false; existing.orgCount = orgCount; }
   } else {
     DATA.initiatives.push({
       id: DATA.nextInitId++, title,
-      desc, location, color: colors[Math.floor(Math.random()*colors.length)],
+      desc: '', location, color: colors[Math.floor(Math.random()*colors.length)],
       orgCount, postCount: 0, createDate: new Date().toISOString().slice(0,10), isDraft: false
     });
   }
@@ -754,15 +985,14 @@ function submitCreateInit() {
 
 function saveDraftInit() {
   const title = document.getElementById('createInitTitle').value.trim() || '未命名倡议';
-  const desc = document.getElementById('createInitDesc').value.trim() || '';
   const location = document.getElementById('createInitLocation')?.value?.trim() || '';
   const editId = document.getElementById('createInitEditId').value;
   if (editId) {
     const existing = DATA.initiatives.find(i => i.id === parseInt(editId));
-    if (existing) { existing.title = title; existing.desc = desc; existing.location = location; }
+    if (existing) { existing.title = title; existing.location = location; }
   } else {
     DATA.initiatives.push({
-      id: DATA.nextInitId++, title, desc, location,
+      id: DATA.nextInitId++, title, desc: '', location,
       color:'linear-gradient(135deg,#95A5A6,#7F8C8D)', orgCount:0, postCount:0,
       createDate: new Date().toISOString().slice(0,10), isDraft: true
     });
@@ -780,7 +1010,6 @@ function openEditInitModal(id) {
   if (!init) return;
   document.getElementById('editInitId').value = init.id;
   document.getElementById('editInitTitle').value = init.title;
-  document.getElementById('editInitDesc').value = init.desc;
   document.getElementById('editInitLocation').value = init.location || '';
   // 封面预览显示颜色渐变
   const coverEl = document.getElementById('editCoverPreview');
@@ -807,11 +1036,9 @@ function submitEditInit() {
   const init = DATA.initiatives.find(i => i.id === id);
   if (!init) return;
   const title = document.getElementById('editInitTitle').value.trim();
-  const desc = document.getElementById('editInitDesc').value.trim();
   const location = document.getElementById('editInitLocation').value.trim();
-  if (!title || !desc) { showToast('请填写倡议主题和说明'); return; }
+  if (!title) { showToast('请填写倡议主题'); return; }
   init.title = title;
-  init.desc = desc;
   init.location = location;
   closeModal('editInitModal');
   renderInitiatives();
@@ -897,7 +1124,7 @@ function renderTopicOrgDropdown(keyword) {
   } else {
     dropdown.innerHTML = '<div style="padding:6px 12px;font-size:11px;color:var(--text-hint);cursor:pointer;border-bottom:1px solid #f0f0f0" onclick="selectTopicOrg(\'\',\'\')">全部组织</div>' + filtered.map(o =>
       `<div style="padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectTopicOrg('${o.name}','${o.name}')">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三'[o.level-1]}级</span>
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三四五'[o.level-1]}级</span>
         <span>${o.name}</span>
       </div>`
     ).join('');
@@ -1037,18 +1264,23 @@ function renderPostListView(pageData, status) {
 
   pageData.forEach(p => {
     const isChecked = selectedPostIds.has(p.id);
-    const statusLabel = {showing:'展示中',pending:'待审核',hidden:'已隐藏'}[p.status];
+    const isOpsHidden = p.status === 'hidden' && p.hiddenBy === 'ops';
+    let statusLabel = {showing:'展示中',pending:'待审核',hidden:'已隐藏'}[p.status];
+    if (p.status === 'hidden') statusLabel = isOpsHidden ? '运营隐藏' : '机构隐藏';
     const statusClass = 'status-' + p.status;
     let actions = '';
     if (status === 'showing') {
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link btn-danger" onclick="setPostStatus(${p.id},'hidden')">隐藏</a>`;
     } else if (status === 'pending') {
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link" style="color:var(--green)" onclick="setPostStatus(${p.id},'showing')">展示</a><a class="btn-link btn-danger" onclick="setPostStatus(${p.id},'hidden')">隐藏</a>`;
+    } else if (isOpsHidden) {
+      // 运营隐藏：机构端不可操作
+      actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><span class="btn-link" style="color:var(--text-hint);cursor:not-allowed" title="该帖子由平台运营隐藏，机构无法恢复">运营隐藏·不可操作</span>`;
     } else {
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link" style="color:var(--green)" onclick="setPostStatus(${p.id},'showing')">恢复</a>`;
     }
     html += `<tr${status==='hidden'?' style="opacity:.6"':''}>
-      <td><input type="checkbox" value="${p.id}" onchange="togglePostSelect(${p.id},this.checked)" ${isChecked?'checked':''}></td>
+      <td><input type="checkbox" value="${p.id}" onchange="togglePostSelect(${p.id},this.checked)" ${isChecked?'checked':''} ${isOpsHidden?'disabled title="运营隐藏，不可批量操作"':''}></td>
       <td>
         <div class="post-content-cell">
           <div class="post-thumb" style="background:${p.color}"></div>
@@ -1216,16 +1448,24 @@ function hideBatchBar() {
 }
 
 function batchSetStatus(newStatus) {
-  let count = 0;
+  let count = 0, skipped = 0;
   selectedPostIds.forEach(id => {
     const p = DATA.posts.find(x => x.id === id);
-    if (p) { p.status = newStatus; count++; }
+    if (!p) return;
+    // 运营隐藏的帖子机构端不可操作，跳过
+    if (p.status === 'hidden' && p.hiddenBy === 'ops') { skipped++; return; }
+    p.status = newStatus;
+    if (newStatus === 'hidden') p.hiddenBy = 'org';
+    else delete p.hiddenBy;
+    count++;
   });
   selectedPostIds.clear();
   renderPosts();
   renderTopicStats();
   const msgs = {showing:`已批量展示 ${count} 条帖子`,hidden:`已批量隐藏 ${count} 条帖子`};
-  showToast(msgs[newStatus] || `已更新 ${count} 条帖子`);
+  let msg = msgs[newStatus] || `已更新 ${count} 条帖子`;
+  if (skipped > 0) msg += `（${skipped} 条运营隐藏帖子已跳过）`;
+  showToast(msg);
 }
 
 function clearBatchSelection() {
@@ -1236,8 +1476,15 @@ function clearBatchSelection() {
 function setPostStatus(postId, newStatus) {
   const p = DATA.posts.find(x => x.id === postId);
   if (!p) return;
+  // 运营隐藏的帖子，机构端不可恢复/操作
+  if (p.status === 'hidden' && p.hiddenBy === 'ops') {
+    showToast('该帖子由平台运营隐藏，机构无法操作');
+    return;
+  }
   const oldStatus = p.status;
   p.status = newStatus;
+  if (newStatus === 'hidden') p.hiddenBy = 'org'; // 机构管理员隐藏
+  else delete p.hiddenBy;
   renderPosts();
   renderTopicStats();
   const msgs = {showing:'已设为展示',hidden:'已隐藏该帖子'};
@@ -1245,25 +1492,100 @@ function setPostStatus(postId, newStatus) {
   else showToast(msgs[newStatus] || '状态已更新');
 }
 
+// 详情弹窗：当前浏览的帖子列表（用于上/下条切换）与多图轮播状态
+let detailNavList = [];
+let detailNavIndex = 0;
+let detailImages = [];
+let detailImgIndex = 0;
+
 function openPostDetail(postId) {
-  const p = DATA.posts.find(x => x.id === postId);
+  // 构建当前 Tab 过滤后的帖子序列，支持上/下条切换
+  detailNavList = getFilteredPosts(currentPostTab);
+  detailNavIndex = detailNavList.findIndex(x => x.id === postId);
+  if (detailNavIndex < 0) {
+    const single = DATA.posts.find(x => x.id === postId);
+    detailNavList = single ? [single] : [];
+    detailNavIndex = 0;
+  }
+  renderPostDetail();
+  openModal('postDetailModal');
+}
+
+function renderPostDetail() {
+  const p = detailNavList[detailNavIndex];
   if (!p) return;
   document.getElementById('detailPostId').value = p.id;
-  document.getElementById('detailImg').style.background = p.color;
   document.getElementById('detailUser').textContent = p.user;
   document.getElementById('detailOrg').textContent = p.org;
   document.getElementById('detailDate').textContent = p.date;
   document.getElementById('detailText').textContent = p.text;
+
+  // 隐藏来源
+  const hiddenRow = document.getElementById('detailHiddenRow');
+  if (p.status === 'hidden') {
+    hiddenRow.style.display = '';
+    document.getElementById('detailHiddenBy').textContent = p.hiddenBy === 'ops' ? '平台运营隐藏（机构不可操作）' : '机构管理员隐藏';
+  } else {
+    hiddenRow.style.display = 'none';
+  }
+
+  // 多图轮播
+  detailImages = (p.images && p.images.length) ? p.images : [p.color];
+  detailImgIndex = 0;
+  renderDetailCarousel();
+
+  // 序号
+  document.getElementById('detailPostIndex').textContent = `（${detailNavIndex + 1} / ${detailNavList.length}）`;
+
+  // 上/下条按钮状态
+  document.getElementById('detailPrevPost').disabled = detailNavIndex <= 0;
+  document.getElementById('detailNextPost').disabled = detailNavIndex >= detailNavList.length - 1;
+
+  // 审核操作
   const footer = document.getElementById('postDetailFooter');
   if (p.status === 'pending') {
     footer.innerHTML = `<button class="btn btn-green" onclick="setPostStatus(${p.id},'showing');closeModal('postDetailModal')">展示</button>
       <button class="btn" style="color:var(--primary);border-color:var(--primary)" onclick="setPostStatus(${p.id},'hidden');closeModal('postDetailModal')">隐藏</button>`;
   } else if (p.status === 'hidden') {
-    footer.innerHTML = `<button class="btn btn-green" onclick="setPostStatus(${p.id},'showing');closeModal('postDetailModal')">恢复展示</button>`;
+    footer.innerHTML = p.hiddenBy === 'ops'
+      ? `<span style="font-size:12px;color:var(--text-hint)">运营隐藏，机构不可操作</span>`
+      : `<button class="btn btn-green" onclick="setPostStatus(${p.id},'showing');closeModal('postDetailModal')">恢复展示</button>`;
   } else {
     footer.innerHTML = `<button class="btn" style="color:var(--primary);border-color:var(--primary)" onclick="setPostStatus(${p.id},'hidden');closeModal('postDetailModal')">隐藏</button>`;
   }
-  openModal('postDetailModal');
+}
+
+function renderDetailCarousel() {
+  const track = document.getElementById('detailImg');
+  if (!track) return;
+  track.innerHTML = detailImages.map(img => `<div class="detail-carousel-slide" style="background:${img}"></div>`).join('');
+  track.style.transform = `translateX(-${detailImgIndex * 100}%)`;
+  const multi = detailImages.length > 1;
+  document.querySelector('#detailCarousel .carousel-prev').style.display = multi ? 'flex' : 'none';
+  document.querySelector('#detailCarousel .carousel-next').style.display = multi ? 'flex' : 'none';
+  const dots = document.getElementById('detailCarouselDots');
+  dots.innerHTML = multi ? detailImages.map((_, i) => `<span class="carousel-dot ${i === detailImgIndex ? 'active' : ''}" onclick="carouselGoto(${i})"></span>`).join('') : '';
+  const counter = document.getElementById('detailCarouselCounter');
+  counter.textContent = multi ? `${detailImgIndex + 1}/${detailImages.length}` : '';
+  counter.style.display = multi ? 'block' : 'none';
+}
+
+function carouselStep(dir) {
+  const n = detailImages.length;
+  detailImgIndex = (detailImgIndex + dir + n) % n;
+  renderDetailCarousel();
+}
+
+function carouselGoto(i) {
+  detailImgIndex = i;
+  renderDetailCarousel();
+}
+
+function navPostDetail(dir) {
+  const next = detailNavIndex + dir;
+  if (next < 0 || next >= detailNavList.length) return;
+  detailNavIndex = next;
+  renderPostDetail();
 }
 
 function backToInitiative() {
@@ -1311,7 +1633,7 @@ function selectExport(el) {
 function renderExportPreview(type) {
   const container = document.getElementById('exportPreview');
   const previews = {
-    org: `<table class="data-table"><thead><tr><th>组织ID</th><th>组织名称</th><th>层级</th><th>成员数</th><th>参与人数</th><th>参与率</th><th>发布条数</th><th>人均发布</th></tr></thead><tbody>${DATA.orgs.slice(0,5).map(o=>`<tr><td>${o.id}</td><td>${o.name}</td><td>${'一二三'[o.level-1]}级</td><td>${o.memberCount}</td><td>${Math.round(o.memberCount*0.6)}</td><td>${(60+Math.random()*30).toFixed(1)}%</td><td>${o.postCount}</td><td>${(o.postCount/o.memberCount).toFixed(1)}</td></tr>`).join('')}</tbody></table>`,
+    org: `<table class="data-table"><thead><tr><th>组织ID</th><th>组织名称</th><th>层级</th><th>上级组织</th><th>负责人</th><th>发起倡议数</th><th>发布条数</th></tr></thead><tbody>${DATA.orgs.slice(0,5).map(o=>`<tr><td>${o.id}</td><td>${o.name}</td><td>${'一二三四五'[o.level-1]}级</td><td>${orgParentPath(o)}</td><td>${o.leader||'-'}</td><td>${o.initCount||0}</td><td>${o.postCount}</td></tr>`).join('')}</tbody></table>`,
     post: `<table class="data-table"><thead><tr><th>帖子ID</th><th>倡议</th><th>发布人</th><th>所属组织</th><th>发布时间</th><th>状态</th><th>内容摘要</th></tr></thead><tbody>${DATA.posts.slice(0,5).map(p=>`<tr><td>POST${String(p.id).padStart(3,'0')}</td><td>${DATA.initiatives.find(i=>i.id===p.initId)?.title||'-'}</td><td>${p.user}</td><td>${p.org}</td><td>${p.date}</td><td>${{showing:'展示中',pending:'待审核',hidden:'已隐藏'}[p.status]}</td><td>${p.text.slice(0,20)}...</td></tr>`).join('')}</tbody></table>`,
     daily: `<table class="data-table"><thead><tr><th>日期</th><th>新增帖子</th><th>参与人数</th><th>新增展示</th><th>新增隐藏</th></tr></thead><tbody><tr><td>2026-06-26</td><td>89</td><td>56</td><td>82</td><td>2</td></tr><tr><td>2026-06-25</td><td>134</td><td>78</td><td>120</td><td>3</td></tr><tr><td>2026-06-24</td><td>112</td><td>65</td><td>105</td><td>1</td></tr><tr><td>2026-06-23</td><td>98</td><td>52</td><td>90</td><td>4</td></tr></tbody></table>`
   };
@@ -1347,7 +1669,7 @@ function renderDCOrgDropdown(keyword) {
   } else {
     dropdown.innerHTML = '<div style="padding:6px 12px;font-size:11px;color:var(--text-hint);cursor:pointer;border-bottom:1px solid #f0f0f0" onclick="selectDCOrg(\'\',\'\')">全部组织</div>' + filtered.map(o =>
       `<div style="padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectDCOrg('${o.name}','${o.name}')">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三'[o.level-1]}级</span>
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三四五'[o.level-1]}级</span>
         <span>${o.name}</span>
       </div>`
     ).join('');
@@ -1563,6 +1885,9 @@ function renderDCRankTable() {
     orgsToRank = orgsToRank.filter(o => o.name === orgFilter);
   }
 
+  // 参与人数为演示估算值（基于发布条数派生），组织数据已不再维护成员数字段
+  const estMembers = o => Math.max(1, Math.round((o.postCount || 0) * 0.55) + 8);
+
   // 如果有筛选，重新计算帖子数
   if (hasFilter) {
     orgsToRank = orgsToRank.map(o => {
@@ -1571,13 +1896,13 @@ function renderDCRankTable() {
         if (initFilter && p.initId !== parseInt(initFilter)) return false;
         return true;
       });
-      return { ...o, filteredPostCount: orgPosts.length, filteredMemberCount: Math.round(o.memberCount * 0.6) };
+      return { ...o, filteredPostCount: orgPosts.length, filteredMemberCount: Math.round(estMembers(o) * 0.6) };
     });
     orgsToRank.sort((a, b) => b.filteredPostCount - a.filteredPostCount);
   } else {
     orgsToRank.sort((a, b) => {
-      if (rankSortKey === 'memberCount') return b.memberCount - a.memberCount;
-      if (rankSortKey === 'avg') return (b.postCount / b.memberCount) - (a.postCount / a.memberCount);
+      if (rankSortKey === 'memberCount') return estMembers(b) - estMembers(a);
+      if (rankSortKey === 'avg') return (b.postCount / estMembers(b)) - (a.postCount / estMembers(a));
       return b.postCount - a.postCount;
     });
   }
@@ -1586,8 +1911,8 @@ function renderDCRankTable() {
   if (!tbody) return;
   tbody.innerHTML = orgsToRank.map((o, i) => {
     const displayPostCount = hasFilter ? o.filteredPostCount : o.postCount;
-    const displayMemberCount = Math.round(o.memberCount * 0.6);
-    const displayAvg = hasFilter ? (o.filteredPostCount / (o.memberCount || 1)).toFixed(1) : (o.postCount / o.memberCount).toFixed(1);
+    const displayMemberCount = Math.round(estMembers(o) * 0.6);
+    const displayAvg = hasFilter ? (o.filteredPostCount / (estMembers(o) || 1)).toFixed(1) : (o.postCount / estMembers(o)).toFixed(1);
     return `
     <tr><td><span class="rank-num ${i < 3 ? 'rank-' + (i + 1) : 'rank-other'}">${i + 1}</span></td>
     <td style="font-weight:${i < 3 ? '600' : '400'}">${o.name}</td>
@@ -1707,7 +2032,7 @@ function renderOrgMgmtTable() {
     <tr data-org-id="${o.orgId}">
       <td style="text-align:center;color:var(--text-hint)">${idx + 1}</td>
       <td style="font-weight:500">${o.orgName}</td>
-      <td><span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 5px">${'一二三'[o.level-1]}级</span></td>
+      <td><span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 5px">${'一二三四五'[o.level-1]}级</span></td>
       <td class="location-cell" title="${o.location || '未设置'}">${o.location || '<span style="color:var(--text-hint)">未设置</span>'}</td>
       <td class="actions-cell">
         <a class="btn-link" onclick="editOrgLocationInInit('${o.orgId}')">编辑地点</a>
@@ -1795,7 +2120,7 @@ function openAddOrgToInitModal() {
     list.innerHTML = sortedOrgs.map(o =>
       `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex">
         <input type="checkbox" value="${o.id}" data-name="${o.name}" data-level="${o.level}" data-location="${o.location||''}">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三'[o.level-1]}级</span>${o.name}
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}
       </label>`
     ).join('');
   }
@@ -1894,7 +2219,7 @@ function renderTopicOrgMgmtTable() {
     <tr data-org-id="${o.orgId}">
       <td style="text-align:center;color:var(--text-hint)">${idx + 1}</td>
       <td style="font-weight:500">${o.orgName}</td>
-      <td><span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 5px">${'一二三'[o.level-1]}级</span></td>
+      <td><span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 5px">${'一二三四五'[o.level-1]}级</span></td>
       <td class="location-cell" title="${o.location || '未设置'}">${o.location || '<span style="color:var(--text-hint)">未设置</span>'}</td>
       <td class="actions-cell">
         <a class="btn-link" onclick="editTopicOrgLocation('${o.orgId}')">编辑地点</a>
@@ -1993,7 +2318,7 @@ function openAddOrgToTopicInitModal() {
     list.innerHTML = sortedOrgs.map(o =>
       `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex">
         <input type="checkbox" value="${o.id}" data-name="${o.name}" data-level="${o.level}" data-location="${o.location||''}">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三'[o.level-1]}级</span>${o.name}
+        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}
       </label>`
     ).join('');
   }
@@ -2043,15 +2368,7 @@ function submitAddOrgToTopicInit() {
 document.addEventListener('DOMContentLoaded', () => {
   renderOrgTable();
   renderRankTable();
-  // 绑定筛选事件
-  ['filterL1','filterL2','filterL3','chkL1','chkL2','chkL3'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', () => {
-      if (id === 'filterL1') updateL2Options();
-      if (id === 'filterL2') updateL3Options();
-      renderOrgTable();
-    });
-  });
+  // 级联选择器已自带交互，这里仅绑定搜索框
   document.getElementById('orgSearch')?.addEventListener('input', renderOrgTable);
   document.getElementById('initSearch')?.addEventListener('input', renderInitiatives);
   document.getElementById('initDateFrom')?.addEventListener('change', renderInitiatives);
