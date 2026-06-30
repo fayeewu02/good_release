@@ -143,7 +143,7 @@
             <select id="initTypeFilter" onchange="renderInitiatives()" style="width:150px">
               <option value="">全部类型</option>
               <option value="unified">统一倡议</option>
-              <option value="custom">下级自定义倡议</option>
+              <option value="custom">自定义倡议</option>
             </select>
           </div>
           <div class="draft-panel" id="draftPanel"><div class="draft-list"></div></div>
@@ -156,7 +156,7 @@
                     <th>倡议内容</th>
                     <th style="width:110px">倡议类型</th>
                     <th style="width:130px">活动地址</th>
-                    <th style="width:90px" onclick="sortInitList('orgCount')" class="sortable">组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
+                    <th style="width:110px" onclick="sortInitList('orgCount')" class="sortable">参与组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
                     <th style="width:110px" onclick="sortInitList('postCount')" class="sortable">帖子发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
                     <th style="width:100px" onclick="sortInitList('memberCount')" class="sortable">参与人数 <span class="sort-arrow" data-key="memberCount">⇅</span></th>
                     <th style="width:110px">创建时间</th>
@@ -534,20 +534,24 @@
 
 <!-- ===== 弹窗：批量导出组织 ===== -->
 <div class="modal-overlay" id="exportOrgModal">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="width:520px">
     <div class="modal-header"><h3>批量导出组织</h3><button class="modal-close" onclick="closeModal('exportOrgModal')">✕</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">请选择要导出的组织层级，导出内容包含：组织ID、组织名称、层级、上级组织、负责人、手机号。</p>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">请选择要导出的组织，导出内容包含：组织ID、组织名称、层级、上级组织、负责人、手机号。</p>
       <div class="form-group">
-        <label style="margin-bottom:8px;display:block">导出层级</label>
-        <label class="level-filter-opt" style="padding:6px 0"><input type="checkbox" id="exportLevelAll" checked onchange="toggleExportAllLevels(this)"> <strong>全部层级</strong></label>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px">
-          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="1" onchange="onExportLevelChange()"> 一级</label>
-          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="2" onchange="onExportLevelChange()"> 二级</label>
-          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="3" onchange="onExportLevelChange()"> 三级</label>
-          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="4" onchange="onExportLevelChange()"> 四级</label>
-          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="5" onchange="onExportLevelChange()"> 五级</label>
+        <label>选择导出组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <select id="exportOrgLayerFilter" onchange="filterExportOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option>
+            <option value="4">四级组织</option>
+            <option value="5">五级组织</option>
+          </select>
+          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="exportOrgSelectAllCb" onchange="toggleAllExportOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
         </div>
+        <div class="org-selector" id="exportOrgList"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('exportOrgModal')">取消</button><button class="btn btn-primary" onclick="confirmExportOrgs()">确认导出</button></div>
@@ -856,13 +860,11 @@
     <div class="modal-body">
       <div class="form-group">
         <label>第一步：选择倡议（可多选）</label>
-        <div style="position:relative">
-          <input type="text" id="qrInitSearchInput" placeholder="输入倡议内容关键词搜索后勾选..." style="width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" oninput="onQRInitSearchInput()" onfocus="onQRInitSearchInput()">
-          <!-- 搜索结果浮层：仅当输入关键词时显示 -->
-          <div id="qrInitSearchDropdown" class="qr-init-dropdown" style="display:none"></div>
+        <div style="position:relative" id="qrInitPickWrap">
+          <input type="text" id="qrInitPickInput" placeholder="点击此处选择倡议，可多选..." style="width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;background:#fff" readonly onclick="openQRInitPicker(event)">
+          <!-- 下拉浮层：点击输入框时显示 -->
+          <div id="qrInitPickDropdown" class="qr-init-dropdown" style="display:none"></div>
         </div>
-        <!-- 已选倡议标签区 -->
-        <div id="qrInitSelected" class="qr-init-tags" style="display:none"></div>
       </div>
 
       <div class="form-group">
@@ -1118,62 +1120,51 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderQRModal() {
   // 重置已选倡议
   qrSelectedInits.clear();
-  const search = document.getElementById('qrInitSearchInput');
-  if (search) search.value = '';
-  const dropdown = document.getElementById('qrInitSearchDropdown');
+  const inp = document.getElementById('qrInitPickInput');
+  if (inp) inp.value = '';
+  const dropdown = document.getElementById('qrInitPickDropdown');
   if (dropdown) dropdown.style.display = 'none';
-  renderQRInitTags();
   renderQROrgList();
 }
 
-// 倡议搜索：仅在输入关键词后显示候选；与发起倡议批量选择保持轻量风格
-let qrSelectedInits = new Set(); // 已选倡议 id 集合
-function onQRInitSearchInput() {
-  const kw = (document.getElementById('qrInitSearchInput').value || '').trim().toLowerCase();
-  const dropdown = document.getElementById('qrInitSearchDropdown');
-  if (!kw) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
-  const matched = DATA.initiatives.filter(i => !i.isDraft && (i.title || '').toLowerCase().includes(kw));
-  if (matched.length === 0) {
-    dropdown.innerHTML = `<div class="qr-init-empty">未找到匹配的倡议</div>`;
+// 倡议选择：点击输入框时弹出可勾选下拉，勾选项用分号回填到输入框
+let qrSelectedInits = new Set();
+function openQRInitPicker(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('qrInitPickDropdown');
+  const inits = DATA.initiatives.filter(i => !i.isDraft);
+  if (inits.length === 0) {
+    dropdown.innerHTML = `<div class="qr-init-empty">暂无可选倡议</div>`;
   } else {
-    dropdown.innerHTML = matched.map(i => `
+    dropdown.innerHTML = inits.map(i => `
       <label class="qr-init-opt">
         <input type="checkbox" value="${i.id}" ${qrSelectedInits.has(i.id) ? 'checked' : ''} onchange="toggleQRInit(${i.id}, this.checked)">
         <span style="flex:1">${i.title}</span>
-        ${i.customByChild ? '<span class="init-type-tag init-type-custom" style="font-size:10px;padding:0 6px">下级自定义</span>' : ''}
+        ${i.customByChild ? '<span class="init-type-tag init-type-custom" style="font-size:10px;padding:0 6px">自定义倡议</span>' : ''}
       </label>`).join('');
   }
   dropdown.style.display = 'block';
 }
 function toggleQRInit(id, checked) {
   if (checked) qrSelectedInits.add(id); else qrSelectedInits.delete(id);
-  renderQRInitTags();
+  syncQRInitInput();
 }
-function removeQRInitTag(id) {
-  qrSelectedInits.delete(id);
-  renderQRInitTags();
-  // 同步浮层中的 checkbox
-  const cb = document.querySelector(`#qrInitSearchDropdown input[value="${id}"]`);
-  if (cb) cb.checked = false;
+function syncQRInitInput() {
+  const inp = document.getElementById('qrInitPickInput');
+  if (!inp) return;
+  const titles = Array.from(qrSelectedInits).map(id => {
+    const i = DATA.initiatives.find(x => x.id === id);
+    return i ? i.title : '';
+  }).filter(Boolean);
+  inp.value = titles.join('；');
+  inp.title = inp.value; // 鼠标悬浮可看完整
 }
-function renderQRInitTags() {
-  const wrap = document.getElementById('qrInitSelected');
-  if (!wrap) return;
-  if (qrSelectedInits.size === 0) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
-  const tags = Array.from(qrSelectedInits).map(id => {
-    const init = DATA.initiatives.find(i => i.id === id);
-    if (!init) return '';
-    return `<span class="qr-init-tag">${init.title}<span class="qr-init-tag-close" onclick="removeQRInitTag(${id})">✕</span></span>`;
-  }).join('');
-  wrap.innerHTML = tags;
-  wrap.style.display = 'flex';
-}
-// 点击弹窗其他位置时关闭浮层
+// 点击其他位置时关闭下拉
 document.addEventListener('click', e => {
-  const dd = document.getElementById('qrInitSearchDropdown');
-  const inp = document.getElementById('qrInitSearchInput');
-  if (!dd || !inp) return;
-  if (e.target !== inp && !dd.contains(e.target)) dd.style.display = 'none';
+  const dd = document.getElementById('qrInitPickDropdown');
+  const wrap = document.getElementById('qrInitPickWrap');
+  if (!dd || !wrap) return;
+  if (!wrap.contains(e.target)) dd.style.display = 'none';
 });
 
 function renderQROrgList() {

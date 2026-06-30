@@ -721,22 +721,58 @@ function confirmImportOrgs() {
 
 // ===== 批量导出组织 =====
 function openExportOrgModal() {
-  document.getElementById('exportLevelAll').checked = true;
-  document.querySelectorAll('.export-level-cb').forEach(c => c.checked = false);
+  // 初始化组织列表（默认全选）
+  const list = document.getElementById('exportOrgList');
+  if (list) {
+    const sortedOrgs = [...DATA.orgs].sort((a,b) => {
+      if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
+      if (a.level !== b.level) return a.level - b.level;
+      return a.name.localeCompare(b.name);
+    });
+    list.innerHTML = sortedOrgs.map(o =>
+      `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex"><input type="checkbox" checked onchange="updateExportOrgSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`
+    ).join('');
+  }
+  const sel = document.getElementById('exportOrgLayerFilter');
+  if (sel) sel.value = '';
+  const cb = document.getElementById('exportOrgSelectAllCb');
+  if (cb) cb.checked = true;
   openModal('exportOrgModal');
 }
-function toggleExportAllLevels(cb) {
-  if (cb.checked) document.querySelectorAll('.export-level-cb').forEach(c => c.checked = false);
+function filterExportOrgs() {
+  const level = document.getElementById('exportOrgLayerFilter').value;
+  document.querySelectorAll('#exportOrgList label').forEach(item => {
+    item.style.display = (!level || item.dataset.level === level) ? 'flex' : 'none';
+  });
+  updateExportOrgSelectAllCb();
 }
-function onExportLevelChange() {
-  const any = Array.from(document.querySelectorAll('.export-level-cb')).some(c => c.checked);
-  document.getElementById('exportLevelAll').checked = !any;
+function toggleAllExportOrgs(checked) {
+  document.querySelectorAll('#exportOrgList label').forEach(label => {
+    if (label.style.display !== 'none') {
+      label.querySelector('input[type="checkbox"]').checked = checked;
+    }
+  });
+}
+function updateExportOrgSelectAllCb() {
+  const labels = document.querySelectorAll('#exportOrgList label');
+  const visibleCbs = [...labels].filter(l => l.style.display !== 'none').map(l => l.querySelector('input[type="checkbox"]'));
+  const allChecked = visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked);
+  const cb = document.getElementById('exportOrgSelectAllCb');
+  if (cb) cb.checked = allChecked;
 }
 function confirmExportOrgs() {
-  const all = document.getElementById('exportLevelAll').checked;
-  const levels = Array.from(document.querySelectorAll('.export-level-cb:checked')).map(c => parseInt(c.value));
-  const list = DATA.orgs.filter(o => all || levels.includes(o.level));
-  if (list.length === 0) { showToast('所选层级暂无组织'); return; }
+  // 通过组织名收集已勾选的组织
+  const checkedNames = new Set();
+  document.querySelectorAll('#exportOrgList label').forEach(label => {
+    const c = label.querySelector('input[type="checkbox"]');
+    if (c && c.checked) {
+      // label 文本含"X级 + 组织名"，通过去除层级标签提取名称
+      const name = label.textContent.replace(/[一二三四五]级/, '').trim();
+      checkedNames.add(name);
+    }
+  });
+  const list = DATA.orgs.filter(o => checkedNames.has(o.name));
+  if (list.length === 0) { showToast('请至少勾选一个组织'); return; }
   const rows = [['组织ID','组织名称','层级','上级组织','负责人','手机号']];
   list.forEach(o => {
     rows.push([
@@ -900,9 +936,9 @@ function renderInitiatives() {
     tbody.innerHTML = sorted.map(i => {
       const isCustom = !!i.customByChild;
       const typeTag = isCustom
-        ? '<span class="init-type-tag init-type-custom">下级自定义</span>'
+        ? '<span class="init-type-tag init-type-custom">自定义倡议</span>'
         : '<span class="init-type-tag init-type-unified">统一倡议</span>';
-      const titleText = isCustom ? (i.remark || i.title || '下级自定义倡议') : i.title;
+      const titleText = isCustom ? (i.remark || i.title || '自定义倡议') : i.title;
       const locationText = isCustom ? '—' : (i.location || '不限');
       // 参与人数：根据帖子去重统计，若无则按发帖数 * 0.6 估算
       const usersSet = new Set(DATA.posts.filter(p => p.initId === i.id).map(p => p.user));
@@ -911,13 +947,8 @@ function renderInitiatives() {
       return `
       <tr style="cursor:pointer" onclick="switchToTopic(${i.id})">
         <td>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div class="init-cover-thumb" style="background:${i.color};width:28px;height:28px"></div>
-            <div>
-              <div class="init-title">${titleText}</div>
-              ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
-            </div>
-          </div>
+          <div class="init-title">${titleText}</div>
+          ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
         </td>
         <td>${typeTag}</td>
         <td style="font-size:12px;color:var(--text-secondary)">${locationText}</td>
