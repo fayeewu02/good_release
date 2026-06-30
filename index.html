@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好事发布器 · B端管理后台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <!-- ===== 顶栏 ===== -->
+  <header class="global-header">
+    <div class="logo">腾讯公益 · 机构服务平台</div>
+    <div class="header-right">
+      <span style="cursor:pointer">向平台反馈</span>
+      <div class="user"><div class="avatar">张</div><span>张明远</span></div>
+    </div>
+  </header>
+
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">经营推广</div>
+        <div class="nav-item active" onclick="switchPage('org',this)">体系管理</div>
+        <div class="nav-item" onclick="switchPage('data-center',this)">数据中心</div>
+        <div class="nav-item nav-item-parent" onclick="toggleSubMenu(this)">
+          动员工具
+          <span class="nav-arrow">▾</span>
+        </div>
+        <div class="nav-submenu show" id="navSubmenuDongyuan">
+          <div class="nav-item nav-sub-item" onclick="switchPage('initiative',this)">好事发布器</div>
+          <div class="nav-item nav-sub-item" onclick="switchPage('quanmu',this)">劝募大使</div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <div class="content">
+      <!-- ============ 体系管理 ============ -->
+      <div class="page active" id="page-org">
+        <div class="init-action-bar">
+          <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
+          <button class="btn" onclick="openImportOrgModal()">批量导入</button>
+          <button class="btn" onclick="openExportOrgModal()">批量导出</button>
+        </div>
+        <div class="filter-bar">
+          <span class="filter-label">组织层级</span>
+          <div class="org-cascader" id="orgCascader">
+            <input type="text" id="orgCascaderInput" readonly placeholder="全部组织（最多5级）" onclick="toggleOrgCascader(event)">
+            <span class="org-cascader-clear" id="orgCascaderClear" onclick="clearOrgCascader(event)" style="display:none">✕</span>
+            <input type="hidden" id="orgCascaderValue" value="">
+            <div class="org-cascader-panel" id="orgCascaderPanel" style="display:none"></div>
+          </div>
+          <div class="filter-sep"></div>
+          <span class="filter-label">组织名称/负责人：</span>
+          <input type="text" id="orgSearch" placeholder="输入组织名称或负责人" style="width:220px" oninput="renderOrgTable()">
+          <div class="filter-sep"></div>
+          <span class="filter-label">仅查看</span>
+          <div class="level-filter" id="levelFilter">
+            <input type="text" id="levelFilterInput" readonly placeholder="全部层级" onclick="toggleLevelFilter(event)">
+            <span class="org-cascader-clear" id="levelFilterClear" onclick="clearLevelFilter(event)" style="display:none">✕</span>
+            <div class="level-filter-panel" id="levelFilterPanel" style="display:none">
+              <label class="level-filter-opt"><input type="checkbox" value="1" onchange="applyLevelFilter()"> 一级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="2" onchange="applyLevelFilter()"> 二级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="3" onchange="applyLevelFilter()"> 三级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="4" onchange="applyLevelFilter()"> 四级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="5" onchange="applyLevelFilter()"> 五级组织</label>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3 id="orgCount">共 6 个组织</h3></div>
+          <div class="panel-body" style="padding:0;overflow-x:auto">
+            <table class="data-table">
+              <thead><tr><th>组织ID</th><th>组织名称</th><th>层级</th><th>上级组织</th><th>负责人</th><th>手机号</th><th>操作</th></tr></thead>
+              <tbody id="orgTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 成员管理 ============ -->
+      <div class="page" id="page-member">
+        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <a class="btn-link" onclick="backToOrg()" style="font-size:13px">← 返回体系管理</a>
+            <span id="memberOrgTitle" style="font-size:14px;font-weight:600;margin-left:12px">成员管理</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="openModal('importMemberModal')">批量导入</button>
+            <button class="btn btn-primary" onclick="openAddMemberModal()">＋ 新增成员</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>姓名</th><th>职务</th><th>联系方式</th><th>操作</th></tr></thead>
+              <tbody id="memberTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 好事发布器（原发起倡议） ============ -->
+      <div class="page" id="page-initiative">
+        <!-- 主Tab切换 -->
+        <div class="tabs" id="initMainTabs">
+          <div class="tab active" data-inittab="unified" onclick="switchInitMainTab('unified')">倡议管理</div>
+          <div class="tab" data-inittab="orgdata" onclick="switchInitMainTab('orgdata')">组织数据</div>
+          <div class="tab" data-inittab="invite" onclick="switchInitMainTab('invite')" style="display:none">邀请下级发起管理</div>
+        </div>
+
+        <!-- ===== Tab1：倡议管理 ===== -->
+        <div class="init-main-panel" id="initPanel-unified">
+          <!-- 操作按钮：移到筛选器上方 -->
+          <div class="init-action-bar">
+            <button class="btn btn-primary" onclick="openCreateInitModal()">＋ 发起倡议</button>
+            <button class="btn" onclick="renderQRModal();openModal('exportQRModal')">批量导出倡议</button>
+            <button class="btn" id="draftBar" onclick="toggleDrafts()">草稿箱 (2)</button>
+          </div>
+          <div class="filter-bar">
+            <span class="filter-label">发布时间</span>
+            <input type="date" id="initDateFrom" value="2026-06-01">
+            <span style="color:var(--text-hint)">至</span>
+            <input type="date" id="initDateTo" value="2026-06-30">
+            <div class="filter-sep"></div>
+            <span class="filter-label">内容：</span>
+            <input type="text" id="initSearch" placeholder="搜索倡议内容..." style="width:160px" oninput="renderInitiatives()">
+            <div class="filter-sep"></div>
+            <span class="filter-label">发起组织：</span>
+            <div style="position:relative;display:inline-block">
+              <input type="text" id="initOrgSearch" placeholder="搜索发起组织..." style="width:160px" oninput="filterInitOrgDropdown()" onfocus="showInitOrgDropdown()" autocomplete="off">
+              <input type="hidden" id="initOrgFilter" value="">
+              <div id="initOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+            </div>
+            <div class="filter-sep"></div>
+            <span class="filter-label">倡议类型：</span>
+            <select id="initTypeFilter" onchange="renderInitiatives()" style="width:150px">
+              <option value="">全部类型</option>
+              <option value="unified">统一倡议</option>
+              <option value="custom">自定义倡议</option>
+            </select>
+          </div>
+          <div class="draft-panel" id="draftPanel"><div class="draft-list"></div></div>
+          <!-- 倡议列表（表格） -->
+          <div class="panel">
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table init-list-table">
+                <thead>
+                  <tr>
+                    <th>倡议内容</th>
+                    <th style="width:110px">倡议类型</th>
+                    <th style="width:130px">活动地址</th>
+                    <th style="width:110px" onclick="sortInitList('orgCount')" class="sortable">参与组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
+                    <th style="width:110px" onclick="sortInitList('postCount')" class="sortable">帖子发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
+                    <th style="width:100px" onclick="sortInitList('memberCount')" class="sortable">参与人数 <span class="sort-arrow" data-key="memberCount">⇅</span></th>
+                    <th style="width:110px">创建时间</th>
+                    <th style="width:120px">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="initListBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Tab2：组织数据 ===== -->
+        <div class="init-main-panel" id="initPanel-orgdata" style="display:none">
+          <div class="filter-bar">
+            <span class="filter-label">组织/负责人：</span>
+            <input type="text" id="orgDataSearch" placeholder="输入组织名称或负责人" style="width:240px" oninput="renderOrgDataTable()">
+            <div class="filter-sep"></div>
+            <span class="filter-label">层级</span>
+            <select id="orgDataLevelFilter" onchange="renderOrgDataTable()" style="width:140px">
+              <option value="">全部层级</option>
+              <option value="1">一级组织</option>
+              <option value="2">二级组织</option>
+              <option value="3">三级组织</option>
+              <option value="4">四级组织</option>
+              <option value="5">五级组织</option>
+            </select>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3 id="orgDataCount">共 0 个组织</h3></div>
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>组织名称</th>
+                    <th style="width:80px">层级</th>
+                    <th>上级组织</th>
+                    <th style="width:120px" onclick="sortOrgData('initCount')" class="sortable">发起倡议数 <span class="sort-arrow" data-key="initCount">⇅</span></th>
+                    <th style="width:110px" onclick="sortOrgData('memberCount')" class="sortable">参与人数 <span class="sort-arrow" data-key="memberCount">⇅</span></th>
+                    <th style="width:130px" onclick="sortOrgData('postCount')" class="sortable">发布好事数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
+                  </tr>
+                </thead>
+                <tbody id="orgDataTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Tab3：邀请下级发起管理（保留功能，UI 隐藏入口） ===== -->
+        <div class="init-main-panel" id="initPanel-invite" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <button class="btn" onclick="exportAllInviteQR()">批量导出邀请二维码</button>
+          </div>
+          <div style="background:#E6F4FF;border:1px solid #91CAFF;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1677FF;line-height:1.6">
+            说明：邀请下级发起的倡议<strong>没有统一主题</strong>，由被邀请的下级组织自行填写倡议主题、活动地点等内容。下表汇总你发出的每一批邀请及下级的响应情况，便于统一管理。
+          </div>
+          <div class="filter-bar">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="filter-label">邀请时间</span>
+              <input type="date" id="inviteDateFrom" value="2026-06-01">
+              <span style="color:var(--text-hint)">至</span>
+              <input type="date" id="inviteDateTo" value="2026-06-30">
+              <div class="filter-sep"></div>
+              <span class="filter-label">状态：</span>
+              <select id="inviteStatusFilter" onchange="renderInviteList()">
+                <option value="">全部</option>
+                <option value="进行中">进行中</option>
+                <option value="已结束">已结束</option>
+              </select>
+            </div>
+          </div>
+          <div id="inviteList"></div>
+        </div>
+      </div>
+
+      <!-- ============ 倡议话题页 ============ -->
+      <div class="page" id="page-topic">
+        <div style="margin-bottom:12px"><a class="btn-link" onclick="backToInitiative()" style="font-size:13px">← 返回好事发布器</a></div>
+        <!-- 简洁标题头：黑字、红色按钮 -->
+        <div class="topic-header-plain">
+          <div class="topic-header-plain-left">
+            <h2 id="topicTitle">社区清洁日</h2>
+          </div>
+          <div class="topic-header-plain-actions">
+            <button class="btn btn-primary" onclick="exportTopicInitQR()">导出倡议二维码</button>
+            <button class="btn btn-primary" onclick="openTopicOrgMgmtModal()">组织管理</button>
+          </div>
+        </div>
+
+        <!-- 话题页主Tab：帖子管理 + 下级倡议管理（自定义倡议才显示） -->
+        <div class="tabs topic-main-tabs-row" id="topicMainTabs">
+          <div class="tab active" data-topictab="post" onclick="switchTopicMainTab('post')">帖子管理</div>
+          <div class="tab" data-topictab="childinit" id="topicTabChildInit" style="display:none" onclick="switchTopicMainTab('childinit')">下级倡议管理</div>
+        </div>
+
+        <!-- ===== 帖子管理 Panel（筛选+帖子合并为一个整体） ===== -->
+        <div class="topic-tab-panel" id="topicPanel-post">
+          <div class="panel topic-post-panel">
+            <!-- 筛选区 -->
+            <div class="topic-post-filter">
+              <span class="filter-label">组织/层级</span>
+              <select id="topicLevelFilter" onchange="onTopicFilterChange()">
+                <option value="">全部组织（本级及下级）</option>
+                <option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+              </select>
+              <div style="position:relative;display:inline-block">
+                <input type="text" id="topicOrgSearch" placeholder="搜索组织名称..." style="width:160px" oninput="filterTopicOrgDropdown()" onfocus="showTopicOrgDropdown()" autocomplete="off">
+                <input type="hidden" id="topicOrgFilter" value="">
+                <div class="topic-org-dropdown" id="topicOrgDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+              </div>
+              <div class="filter-sep"></div>
+              <span class="filter-label">发布时间</span>
+              <input type="date" id="topicDateFrom" value="2026-06-01" onchange="onTopicFilterChange()">
+              <span style="color:var(--text-hint)">至</span>
+              <input type="date" id="topicDateTo" value="2026-06-30" onchange="onTopicFilterChange()">
+              <div class="filter-sep"></div>
+              <span class="filter-label">帖子内容</span>
+              <input type="text" id="topicContentSearch" placeholder="搜索帖子内容..." style="width:160px" oninput="onTopicFilterChange()">
+            </div>
+            <!-- Tab：展示中 / 已隐藏（去掉待审核） -->
+            <div class="tabs topic-post-tabs" id="postTabs">
+              <div class="tab active" onclick="switchPostTab('showing')">展示中 (4)</div>
+              <div class="tab" onclick="switchPostTab('hidden')">已隐藏 (2)</div>
+            </div>
+            <!-- 批量操作栏 -->
+            <div class="batch-action-bar" id="batchActionBar" style="display:none;margin:0 16px 8px">
+              <span>已选择 <span class="count" id="batchSelectedCount">0</span> 条帖子</span>
+              <button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="batchSetStatus('showing')" id="batchShowBtn">批量展示</button>
+              <button class="btn btn-sm" style="color:#E84C3D;border-color:#E84C3D" onclick="batchSetStatus('hidden')" id="batchHideBtn">批量隐藏</button>
+              <button class="btn btn-sm" onclick="clearBatchSelection()">取消选择</button>
+            </div>
+            <div id="postsContainer"></div>
+            <!-- 底部分页器 -->
+            <div class="post-pagination-bar" id="postPaginationBar" style="display:none">
+              <div class="page-info" id="postPageInfo">共 0 条数据</div>
+              <div class="page-right">
+                <select id="postPageSize" onchange="changePostPageSize()" class="page-size-select">
+                  <option value="10">10 条/页</option>
+                  <option value="20" selected>20 条/页</option>
+                  <option value="50">50 条/页</option>
+                </select>
+                <div class="page-controls" id="postPageControls"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 下级倡议管理 Panel（仅自定义倡议显示） ===== -->
+        <div class="topic-tab-panel" id="topicPanel-childinit" style="display:none">
+          <div class="panel">
+            <div class="topic-post-filter">
+              <span class="filter-label">下级组织</span>
+              <input type="text" id="childInitOrgSearch" placeholder="搜索下级组织名称..." style="width:200px" oninput="renderChildInitList()">
+              <div class="filter-sep"></div>
+              <span class="filter-label">状态</span>
+              <select id="childInitStatusFilter" onchange="renderChildInitList()">
+                <option value="">全部</option>
+                <option value="showing">展示中</option>
+                <option value="hidden">已隐藏</option>
+              </select>
+            </div>
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table">
+                <thead><tr>
+                  <th>下级组织</th>
+                  <th style="width:80px">层级</th>
+                  <th>倡议内容</th>
+                  <th style="width:120px">活动地址</th>
+                  <th style="width:90px">发布数</th>
+                  <th style="width:120px">发起时间</th>
+                  <th style="width:80px">状态</th>
+                  <th style="width:120px">操作</th>
+                </tr></thead>
+                <tbody id="childInitTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 劝募大使（占位） ============ -->
+      <div class="page" id="page-quanmu">
+        <div class="empty-state" style="padding:80px">
+          <p style="font-size:14px;color:var(--text-secondary)">劝募大使功能开发中，敬请期待...</p>
+        </div>
+      </div>
+
+      <!-- ============ 数据中心 ============ -->
+      <div class="page" id="page-data-center">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="tabs" id="dcTabs" style="margin-bottom:0;border-bottom:none">
+            <div class="tab active" onclick="switchDCTab(this,'initiative')">好事发布器</div>
+            <div class="tab" onclick="switchDCTab(this,'quanmu')">劝募大使</div>
+          </div>
+          <button class="btn" onclick="switchDCExportView()">数据导出</button>
+        </div>
+        <div id="dc-dashboard">
+          <div class="filter-bar">
+            <span class="filter-label">时间范围</span>
+            <input type="date" id="dcDateFrom" value="2026-06-01"><span style="color:var(--text-hint)">至</span><input type="date" id="dcDateTo" value="2026-06-26">
+            <div class="filter-sep"></div>
+            <span class="filter-label">组织/层级</span>
+            <select id="dcLevelFilter">
+              <option value="">全部组织</option>
+              <option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+            </select>
+            <div style="position:relative;display:inline-block">
+              <input type="text" id="dcOrgSearch" placeholder="搜索组织名称..." style="width:140px" oninput="filterDCOrgDropdown()" onfocus="showDCOrgDropdown()" autocomplete="off">
+              <input type="hidden" id="dcOrgFilter" value="">
+              <div id="dcOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+            </div>
+            <div class="filter-sep"></div>
+            <span class="filter-label">倡议筛选</span>
+            <div style="position:relative;display:inline-block">
+              <input type="text" id="dcInitSearch" placeholder="搜索倡议主题..." style="width:140px" oninput="filterDCInitDropdown()" onfocus="showDCInitDropdown()" autocomplete="off">
+              <input type="hidden" id="dcInitFilter" value="">
+              <div id="dcInitDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+            </div>
+          </div>
+          <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card"><div class="label">总发布倡议数</div><div class="value" id="dcInitCount">5</div><div class="trend">进行中倡议</div></div>
+            <div class="stat-card"><div class="label">总参与人数</div><div class="value" id="dcUserCount">3,847</div><div class="trend up">↑ 12.3% 较上周</div></div>
+            <div class="stat-card"><div class="label">总发布好事数</div><div class="value" id="dcPostCount">12,560</div><div class="trend up">↑ 8.7% 较上周</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="panel"><div class="panel-header"><h3>每日发布趋势</h3></div><div class="panel-body"><div class="chart-container" id="trendChart"></div></div></div>
+            <div class="panel"><div class="panel-header"><h3>每日参与人数</h3></div><div class="panel-body"><div class="chart-container" id="userChart"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3>组织排行榜</h3>
+              <select onchange="sortRankBy(this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+                <option value="postCount">按发布条数排序</option><option value="memberCount">按参与人数排序</option><option value="avg">按人均发布排序</option>
+              </select>
+            </div>
+            <div class="panel-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>排名</th><th>组织名称</th><th>参与人数</th><th>发布条数</th><th>人均发布</th></tr></thead>
+                <tbody id="rankTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="dc-quanmu" style="display:none">
+          <div class="empty-state" style="padding:80px">
+            <p style="font-size:14px;color:var(--text-secondary)">劝募大使数据看板开发中，敬请期待...</p>
+          </div>
+        </div>
+        <div id="dc-export" style="display:none">
+          <div class="panel">
+            <div class="panel-header"><h3>选择导出类型</h3></div>
+            <div class="panel-body">
+              <div class="export-options">
+                <div class="export-card selected" data-type="org" onclick="selectExport(this)"><h4>组织汇总表</h4><p>各组织参与人数、发布条数等</p></div>
+                <div class="export-card" data-type="post" onclick="selectExport(this)"><h4>帖子明细表</h4><p>帖子列表、发布人、时间等</p></div>
+                <div class="export-card" data-type="daily" onclick="selectExport(this)"><h4>按日统计表</h4><p>每日发布数与参与人数</p></div>
+              </div>
+              <div style="margin-top:16px;padding:14px;background:#FAFAFA;border-radius:var(--radius)">
+                <div class="form-row" style="margin-bottom:10px">
+                  <div class="form-group" style="margin-bottom:0"><label>选择倡议</label><select><option>全部倡议</option><option>社区清洁日</option><option>关爱独居老人</option></select></div>
+                  <div class="form-group" style="margin-bottom:0"><label>时间范围</label><div style="display:flex;gap:6px;align-items:center"><input type="date" value="2026-06-01"><span style="color:var(--text-hint);font-size:12px">至</span><input type="date" value="2026-06-26"></div></div>
+                </div>
+                <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="showToast('Excel 文件正在生成...')">导出 Excel</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3>导出预览</h3></div>
+            <div class="panel-body" style="padding:0;overflow-x:auto" id="exportPreview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：新建组织 ===== -->
+<div class="modal-overlay" id="createOrgModal">
+  <div class="modal">
+    <div class="modal-header"><h3>新建组织</h3><button class="modal-close" onclick="closeModal('createOrgModal')">✕</button></div>
+    <form id="createOrgForm" onsubmit="event.preventDefault();submitCreateOrg()">
+    <div class="modal-body">
+      <div class="form-group"><label>组织名称 <span class="required">*</span></label><input type="text" id="newOrgName" placeholder="请输入组织名称" required></div>
+      <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="margin-bottom:0;font-size:13px;font-weight:500">是否为一级组织</label>
+        <label class="switch"><input type="checkbox" id="isTopLevelSwitch" checked onchange="toggleTopLevelOrg()"><span class="slider"></span></label>
+      </div>
+      <div class="form-group" id="parentOrgGroup" style="display:none;">
+        <label>归属上级组织 <span class="required">*</span></label>
+        <div style="position:relative;">
+          <input type="text" id="parentOrgSearch" placeholder="搜索上级组织名称..." oninput="filterParentOrgs()" onfocus="showParentDropdown()" autocomplete="off">
+          <input type="hidden" id="newOrgParent" value="">
+          <div class="parent-org-dropdown" id="parentOrgDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;">
+          </div>
+        </div>
+      </div>
+      <div class="form-group" id="orgLevelHint" style="display:none;">
+        <div style="padding:8px 12px;background:#E6F7FF;border-radius:var(--radius);font-size:12px;color:#1890FF;">
+          <span id="orgLevelHintText">当前创建组织为一级组织</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>负责人姓名 <span class="required">*</span></label><input type="text" id="newOrgLeader" placeholder="请输入负责人姓名" required></div>
+        <div class="form-group"><label>负责人手机号 <span class="required">*</span></label><input type="tel" id="newOrgPhone" placeholder="请输入手机号" required></div>
+      </div>
+      <div class="form-group"><label>组织地点</label><input type="text" id="newOrgLocation" placeholder="请输入组织所在地点（选填）"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('createOrgModal')">取消</button><button type="submit" class="btn btn-primary">确认创建</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 弹窗：编辑组织 ===== -->
+<div class="modal-overlay" id="editOrgModal">
+  <div class="modal">
+    <div class="modal-header"><h3>编辑组织</h3><button class="modal-close" onclick="closeModal('editOrgModal')">✕</button></div>
+    <form onsubmit="event.preventDefault();submitEditOrg()">
+    <input type="hidden" id="editOrgId">
+    <div class="modal-body">
+      <div class="form-group"><label>组织名称 <span class="required">*</span></label><input type="text" id="editOrgName" required></div>
+      <div class="form-group"><label>归属上级组织</label><select id="editOrgParent"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label>负责人姓名 <span class="required">*</span></label><input type="text" id="editOrgLeader" required></div>
+        <div class="form-group"><label>负责人手机号 <span class="required">*</span></label><input type="tel" id="editOrgPhone" required></div>
+      </div>
+      <div class="form-group"><label>组织地点 <span class="required">*</span></label><input type="text" id="editOrgLocation" required></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editOrgModal')">取消</button><button type="submit" class="btn btn-primary">保存修改</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量创建组织 ===== -->
+<div class="modal-overlay" id="importOrgModal">
+  <div class="modal">
+    <div class="modal-header"><h3>批量创建组织</h3><button class="modal-close" onclick="closeModal('importOrgModal')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:#F6FFED;border:1px solid #B7EB8F;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+        <p style="font-size:13px;font-weight:600;color:#389E0D;margin-bottom:6px">批量导入组织说明：</p>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin:0">
+          ·每行填写从一级到末级的完整组织链路，系统自动识别层级并创建/复用。<br>
+          ·组织负责人信息填写在第一位。
+        </p>
+      </div>
+      <div style="text-align:center;padding:16px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
+        <p style="font-size:13px;margin-bottom:8px">模板已内置示例，下载后按格式填写即可</p>
+        <a class="btn-link" onclick="downloadOrgTemplate()">下载 Excel 模板（含示例）</a>
+      </div>
+      <div style="text-align:center;padding:24px;background:#FAFAFA;border-radius:var(--radius);border:2px dashed var(--border);cursor:pointer;position:relative" id="importDropZone">
+        <p style="font-size:14px;margin-bottom:6px;color:var(--text-hint)">上传文件</p>
+        <p style="font-size:12px;color:var(--text-secondary)" id="importFileName">点击或拖拽文件到此处上传</p>
+        <input type="file" id="importOrgFile" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="handleImportOrgFile(this)">
+      </div>
+      <!-- 识别结果确认区 -->
+      <div id="importPreview" style="display:none;margin-top:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <div style="background:#E6F4FF;padding:10px 14px;font-size:12px;color:#1677FF;line-height:1.6" id="importPreviewSummary"></div>
+        <div style="max-height:220px;overflow-y:auto">
+          <table class="data-table" style="font-size:12px">
+            <thead><tr><th>组织名称</th><th>组织层级</th><th>本次新增工作人员</th></tr></thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('importOrgModal')">取消</button><button class="btn btn-primary" id="importOrgConfirmBtn" onclick="confirmImportOrgs()" disabled>确认导入</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量导出组织 ===== -->
+<div class="modal-overlay" id="exportOrgModal">
+  <div class="modal" style="width:520px">
+    <div class="modal-header"><h3>批量导出组织</h3><button class="modal-close" onclick="closeModal('exportOrgModal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">请选择要导出的组织，导出内容包含：组织ID、组织名称、层级、上级组织、负责人、手机号。</p>
+      <div class="form-group">
+        <label>选择导出组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <select id="exportOrgLayerFilter" onchange="filterExportOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option>
+            <option value="4">四级组织</option>
+            <option value="5">五级组织</option>
+          </select>
+          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="exportOrgSelectAllCb" onchange="toggleAllExportOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+        </div>
+        <div class="org-selector" id="exportOrgList"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('exportOrgModal')">取消</button><button class="btn btn-primary" onclick="confirmExportOrgs()">确认导出</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量发起倡议 ===== -->
+<div class="modal-overlay" id="createInitModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="createInitModalTitle">发起倡议</h3><button class="modal-close" onclick="closeModal('createInitModal')">✕</button></div>
+    <form id="createInitForm" onsubmit="event.preventDefault();submitCreateInit()">
+    <input type="hidden" id="createInitEditId">
+    <div class="modal-body">
+      <!-- 批量发起开关：置顶 -->
+      <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;background:#FAFAFA;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;margin-bottom:0">批量发起倡议（向多个组织一次性发起）</label>
+        <label class="switch"><input type="checkbox" id="batchSwitch" onchange="toggleBatchOrg()"><span class="slider"></span></label>
+      </div>
+
+      <!-- 下级自定义倡议开关：仅批量开启时出现 -->
+      <div class="form-group" id="customByChildSection" style="display:none;align-items:center;justify-content:space-between;background:#FFF7E6;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
+        <div>
+          <label style="font-size:13px;font-weight:500;margin-bottom:0;display:block">由下级组织自定义倡议内容</label>
+          <p style="font-size:11px;color:var(--text-hint);margin-top:3px;line-height:1.5">打开后无需填写统一的倡议内容和地址，由下级自行决定。</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="customByChildSwitch" onchange="toggleCustomByChild()"><span class="slider"></span></label>
+      </div>
+
+      <!-- A: 统一倡议（默认）— 倡议内容 + 活动地址 -->
+      <div id="unifiedContentBlock">
+        <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="createInitTitle" placeholder="请输入倡议内容"></div>
+        <div class="form-group"><label>活动地址</label><input type="text" id="createInitLocation" placeholder="请输入活动地址（选填）"></div>
+        <!-- 批量勾选层级：仅在批量发起开启时展示 -->
+        <div id="batchOrgSection" style="display:none">
+          <div class="form-group"><label>选择发起组织</label>
+            <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+              <select id="batchLayerFilter" onchange="filterBatchOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
+              <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="batchSelectAllCb" onchange="toggleAllBatchOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+            </div>
+            <div class="org-selector" id="batchOrgList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B: 下级自定义 — 仅备注 + 层级勾选 -->
+      <div id="customByChildBlock" style="display:none">
+        <div class="form-group">
+          <label>备注 <span style="font-weight:400;color:var(--text-hint);font-size:12px">（仅方便本级管理，非倡议内容）</span></label>
+          <input type="text" id="createInitRemark" placeholder="请输入备注">
+        </div>
+        <div class="form-group"><label>选择发起组织</label>
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+            <select id="customLayerFilter" onchange="filterCustomOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
+            <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="customSelectAllCb" onchange="toggleAllCustomOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+          </div>
+          <div class="org-selector" id="customOrgList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn" onclick="saveDraftInit()">保存草稿</button>
+      <button type="submit" class="btn btn-primary">确认发起</button>
+    </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 弹窗：编辑倡议（大弹窗 + 双Tab） ===== -->
+<div class="modal-overlay" id="editInitModal">
+  <div class="modal edit-init-modal-lg">
+    <div class="modal-header">
+      <h3>编辑倡议</h3>
+      <button class="modal-close" onclick="closeModal('editInitModal')">✕</button>
+    </div>
+    <!-- Tab 切换栏 -->
+    <div class="edit-init-tabs">
+      <div class="edit-init-tab active" onclick="switchEditInitTab('basic')">基本信息</div>
+      <div class="edit-init-tab" onclick="switchEditInitTab('orgs')">组织管理 <span class="edit-init-tab-badge" id="editInitOrgBadge">0</span></div>
+    </div>
+    <input type="hidden" id="editInitId">
+    <!-- Tab1: 基本信息 -->
+    <div class="edit-init-tab-panel active" id="editInitTabBasic">
+      <form id="editInitForm" onsubmit="event.preventDefault();submitEditInit()">
+      <div class="modal-body">
+        <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="editInitTitle" placeholder="请输入倡议内容" required></div>
+        <div class="form-group"><label>活动地址（默认）</label><input type="text" id="editInitLocation" placeholder="请输入活动地址（选填，各组织可单独配置）"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editInitModal')">取消</button><button type="submit" class="btn btn-primary">确认修改</button></div>
+      </form>
+    </div>
+    <!-- Tab2: 组织管理 -->
+    <div class="edit-init-tab-panel" id="editInitTabOrgs">
+      <div class="modal-body" style="padding:16px 20px">
+        <!-- 顶部操作栏 -->
+        <div class="org-mgmt-toolbar">
+          <div class="org-mgmt-toolbar-left">
+            <input type="text" id="orgMgmtSearch" placeholder="搜索组织名称..." oninput="filterOrgMgmtList()" style="width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <select id="orgMgmtLevelFilter" onchange="filterOrgMgmtList()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+              <option value="">全部层级</option>
+              <option value="1">一级组织</option>
+              <option value="2">二级组织</option>
+              <option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddOrgToInitModal()">＋ 新增组织</button>
+        </div>
+        <!-- 组织列表 -->
+        <div class="org-mgmt-table-wrap">
+          <table class="data-table org-mgmt-table">
+            <thead>
+              <tr>
+                <th style="width:40px">序号</th>
+                <th>组织名称</th>
+                <th style="width:60px">层级</th>
+                <th>活动地点</th>
+                <th style="width:160px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="orgMgmtTableBody"></tbody>
+          </table>
+        </div>
+        <!-- 空状态 -->
+        <div class="org-mgmt-empty" id="orgMgmtEmpty" style="display:none">
+          <div class="empty-state">
+            <p style="font-size:13px">该倡议暂未关联任何组织</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openAddOrgToInitModal()">＋ 新增组织</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('editInitModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：新增组织到倡议 ===== -->
+<div class="modal-overlay" id="addOrgToInitModal" style="z-index:210">
+  <div class="modal" style="width:440px">
+    <div class="modal-header"><h3>新增组织</h3><button class="modal-close" onclick="closeModal('addOrgToInitModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>选择要添加的组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <select id="addOrgToInitLayerFilter" onchange="filterAddOrgToInitList()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+          </select>
+        </div>
+        <div class="org-selector" id="addOrgToInitList" style="max-height:240px"></div>
+      </div>
+      <div class="form-group"><label>活动地点（可选）</label>
+        <input type="text" id="addOrgToInitLocation" placeholder="为新增组织统一设置活动地点">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('addOrgToInitModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitAddOrgToInit()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：倡议话题页组织管理 ===== -->
+<div class="modal-overlay" id="topicOrgMgmtModal">
+  <div class="modal edit-init-modal-lg">
+    <div class="modal-header">
+      <h3>组织管理 — <span id="topicOrgMgmtTitle">倡议主题</span></h3>
+      <button class="modal-close" onclick="closeModal('topicOrgMgmtModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <!-- 顶部操作栏 -->
+      <div class="org-mgmt-toolbar">
+        <div class="org-mgmt-toolbar-left">
+          <input type="text" id="topicOrgMgmtSearch" placeholder="搜索组织名称..." oninput="filterTopicOrgMgmtList()" style="width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+          <select id="topicOrgMgmtLevelFilter" onchange="filterTopicOrgMgmtList()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddOrgToTopicInitModal()">＋ 新增组织</button>
+      </div>
+      <!-- 组织列表 -->
+      <div class="org-mgmt-table-wrap">
+        <table class="data-table org-mgmt-table" id="topicOrgMgmtTable">
+          <thead>
+            <tr>
+              <th style="width:40px">序号</th>
+              <th>组织名称</th>
+              <th style="width:60px">层级</th>
+              <th>活动地点</th>
+              <th style="width:180px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="topicOrgMgmtTableBody"></tbody>
+        </table>
+      </div>
+      <!-- 空状态 -->
+      <div class="org-mgmt-empty" id="topicOrgMgmtEmpty" style="display:none">
+        <div class="empty-state">
+          <p style="font-size:13px">该倡议暂未关联任何组织</p>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openAddOrgToTopicInitModal()">＋ 新增组织</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn" onclick="closeModal('topicOrgMgmtModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：新增组织到倡议话题页 ===== -->
+<div class="modal-overlay" id="addOrgToTopicInitModal" style="z-index:210">
+  <div class="modal" style="width:440px">
+    <div class="modal-header"><h3>新增组织</h3><button class="modal-close" onclick="closeModal('addOrgToTopicInitModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>选择要添加的组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <select id="addOrgToTopicInitLayerFilter" onchange="filterAddOrgToTopicInitList()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+          </select>
+        </div>
+        <div class="org-selector" id="addOrgToTopicInitList" style="max-height:240px"></div>
+      </div>
+      <div class="form-group"><label>活动地点（可选）</label>
+        <input type="text" id="addOrgToTopicInitLocation" placeholder="为新增组织统一设置活动地点">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('addOrgToTopicInitModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitAddOrgToTopicInit()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：编辑组织活动地点（话题页用） ===== -->
+<div class="modal-overlay" id="editTopicOrgLocationModal" style="z-index:210">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><h3>编辑活动地点</h3><button class="modal-close" onclick="closeModal('editTopicOrgLocationModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>组织名称</label>
+        <input type="text" id="editTopicOrgLocName" readonly style="background:#FAFAFA;color:var(--text-secondary)">
+      </div>
+      <div class="form-group">
+        <label>活动地点 <span class="required">*</span></label>
+        <input type="text" id="editTopicOrgLocValue" placeholder="请输入活动地点">
+      </div>
+      <input type="hidden" id="editTopicOrgLocOrgId">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('editTopicOrgLocationModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitEditTopicOrgLocation()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：编辑组织活动地点 ===== -->
+<div class="modal-overlay" id="editOrgLocationModal" style="z-index:210">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><h3>编辑活动地点</h3><button class="modal-close" onclick="closeModal('editOrgLocationModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>组织名称</label>
+        <input type="text" id="editOrgLocName" readonly style="background:#FAFAFA;color:var(--text-secondary)">
+      </div>
+      <div class="form-group">
+        <label>活动地点 <span class="required">*</span></label>
+        <input type="text" id="editOrgLocValue" placeholder="请输入活动地点">
+      </div>
+      <input type="hidden" id="editOrgLocOrgId">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('editOrgLocationModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitEditOrgLocation()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：发起成功 ===== -->
+<div class="modal-overlay" id="initSuccessModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-body">
+      <div class="success-dialog">
+        <div class="icon" style="font-size:32px;color:var(--green);font-weight:700">✓</div>
+        <h3>倡议发起成功！</h3>
+        <p>已向 <span id="successOrgCount">5</span> 个组织发起倡议「<span id="successInitTitle"></span>」</p>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn" onclick="closeModal('initSuccessModal');directExportQR()">批量导出倡议二维码</button>
+          <button class="btn btn-primary" onclick="closeModal('initSuccessModal')">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量导出二维码 ===== -->
+<div class="modal-overlay" id="exportQRModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-header"><h3>批量导出倡议二维码</h3><button class="modal-close" onclick="closeModal('exportQRModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>第一步：选择倡议（可多选）</label>
+        <div style="position:relative" id="qrInitPickWrap">
+          <input type="text" id="qrInitPickInput" placeholder="点击此处选择倡议，可多选..." style="width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;background:#fff" readonly onclick="openQRInitPicker(event)">
+          <!-- 下拉浮层：点击输入框时显示 -->
+          <div id="qrInitPickDropdown" class="qr-init-dropdown" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>选择发起组织</label>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <select id="qrOrgLayerFilter" onchange="filterQROrgByLayer()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
+            <option value="">全部层级</option>
+            <option value="1">一级组织</option>
+            <option value="2">二级组织</option>
+            <option value="3">三级组织</option>
+            <option value="4">四级组织</option>
+            <option value="5">五级组织</option>
+          </select>
+          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="qrSelectAllCb" onchange="toggleAllQROrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+        </div>
+        <div class="org-selector" id="qrOrgList"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出压缩包</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量邀请下级发起倡议 ===== -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal">
+    <div class="modal-header"><h3>批量邀请下级发起倡议</h3><button class="modal-close" onclick="closeModal('inviteModal')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:#E6F4FF;border:1px solid #91CAFF;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1677FF;line-height:1.6">
+        邀请发出后，被邀请的下级组织将<strong>自行填写倡议主题、活动地点</strong>等内容，无需统一主题。你可在「邀请下级发起管理」中查看每批邀请的响应情况。
+      </div>
+      <div class="form-group">
+        <label>第一步：选择邀请层级范围 <span class="required">*</span></label>
+        <select id="inviteLevelScope" onchange="renderInviteOrgList()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+          <option value="">请选择要邀请的层级</option>
+          <option value="all2">全部二级组织</option>
+          <option value="all3">全部三级组织</option>
+          <option value="all4">全部四级组织</option>
+          <option value="all5">全部五级组织</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>第二步：勾选被邀请组织</label>
+        <div style="margin-bottom:8px;display:flex;gap:10px;align-items:center">
+          <input type="text" id="inviteOrgSearch" placeholder="搜索组织名称..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px" oninput="renderInviteOrgList()">
+          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="inviteSelectAllCb" onchange="toggleAllInviteOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+        </div>
+        <div class="org-selector" id="inviteOrgList"></div>
+      </div>
+      <div style="background:#FAFAFA;padding:10px;border-radius:var(--radius);font-size:11px;color:var(--text-secondary)">确认后将生成邀请记录，并可批量导出「邀请发起倡议二维码」（含组织名称、所属层级、专属邀请二维码）供下级扫码填写。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('inviteModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitInvite()">确认邀请</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：邀请发起成功 ===== -->
+<div class="modal-overlay" id="inviteSuccessModal">
+  <div class="modal" style="width:380px">
+    <div class="modal-body">
+      <div class="success-dialog">
+        <div class="icon" style="font-size:32px;color:var(--green);font-weight:700">✓</div>
+        <h3>邀请发出成功！</h3>
+        <p>已邀请 <span id="inviteSuccessCount">0</span> 个下级组织发起倡议，等待下级填写主题</p>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn" onclick="closeModal('inviteSuccessModal');exportLastInviteQR()">批量导出邀请二维码</button>
+          <button class="btn btn-primary" onclick="closeModal('inviteSuccessModal')">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：查看邀请响应详情 ===== -->
+<div class="modal-overlay" id="inviteDetailModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-header"><h3>邀请响应详情</h3><button class="modal-close" onclick="closeModal('inviteDetailModal')">✕</button></div>
+    <div class="modal-body" id="inviteDetailBody"></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('inviteDetailModal')">关闭</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：帖子详情 ===== -->
+<div class="modal-overlay" id="postDetailModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h3>帖子详情 <span id="detailPostIndex" style="font-size:12px;font-weight:400;color:var(--text-hint)"></span></h3>
+      <button class="modal-close" onclick="closeModal('postDetailModal')">✕</button>
+    </div>
+    <input type="hidden" id="detailPostId">
+    <div class="modal-body">
+      <!-- 多图滑动浏览 -->
+      <div class="detail-carousel" id="detailCarousel">
+        <div class="detail-carousel-track" id="detailImg"></div>
+        <button class="carousel-arrow carousel-prev" onclick="carouselStep(-1)" aria-label="上一张">‹</button>
+        <button class="carousel-arrow carousel-next" onclick="carouselStep(1)" aria-label="下一张">›</button>
+        <div class="carousel-dots" id="detailCarouselDots"></div>
+        <div class="carousel-counter" id="detailCarouselCounter"></div>
+      </div>
+      <div style="font-size:12px;line-height:1.8;color:var(--text-secondary);margin-bottom:14px">
+        <p><strong>发布人：</strong><span id="detailUser"></span></p>
+        <p><strong>所属组织：</strong><span id="detailOrg"></span></p>
+        <p><strong>发布时间：</strong><span id="detailDate"></span></p>
+        <p id="detailHiddenRow" style="display:none"><strong>隐藏来源：</strong><span id="detailHiddenBy"></span></p>
+      </div>
+      <div id="detailText" style="font-size:13px;line-height:1.6;padding:12px;background:#FAFAFA;border-radius:var(--radius)"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" id="detailPrevPost" onclick="navPostDetail(-1)">‹ 上一条</button>
+        <button class="btn btn-sm" id="detailNextPost" onclick="navPostDetail(1)">下一条 ›</button>
+      </div>
+      <div style="display:flex;gap:8px" id="postDetailFooter"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 确认删除 ===== -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h4>确认删除</h4>
+    <p>确定要删除该组织吗？删除后历史数据将保留（归档处理）</p>
+    <div class="btns">
+      <button class="btn" onclick="document.getElementById('confirmOverlay').classList.remove('show')">取消</button>
+      <button class="btn btn-primary" onclick="executeDeleteOrg()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：分享组织二维码 ===== -->
+<div class="modal-overlay" id="shareQRModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><h3>分享组织二维码</h3><button class="modal-close" onclick="closeModal('shareQRModal')">✕</button></div>
+    <div class="modal-body" style="text-align:center">
+      <p style="font-size:14px;font-weight:600;margin-bottom:12px" id="shareQROrgName">组织名称</p>
+      <canvas id="shareQRCanvas" style="width:200px;height:200px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px"></canvas>
+      <div style="margin-bottom:16px">
+        <input type="text" id="shareQRLink" readonly style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text-secondary);background:#FAFAFA">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn" onclick="saveQRImage()">保存图片</button>
+        <button class="btn btn-primary" onclick="copyShareLink()">复制链接</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：新增成员 ===== -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-header"><h3>新增成员</h3><button class="modal-close" onclick="closeModal('addMemberModal')">✕</button></div>
+    <form id="addMemberForm" onsubmit="event.preventDefault();submitAddMember()">
+    <div class="modal-body">
+      <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="addMemberName" placeholder="请输入成员姓名" required></div>
+      <div class="form-group"><label>职务 <span class="required">*</span></label><input type="text" id="addMemberRole" placeholder="请输入职务" required></div>
+      <div class="form-group"><label>联系方式 <span class="required">*</span></label><input type="tel" id="addMemberPhone" placeholder="请输入手机号" required></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('addMemberModal')">取消</button><button type="submit" class="btn btn-primary">确认添加</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量导入成员 ===== -->
+<div class="modal-overlay" id="importMemberModal">
+  <div class="modal">
+    <div class="modal-header"><h3>批量导入组织管理人员</h3><button class="modal-close" onclick="closeModal('importMemberModal')">✕</button></div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:20px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
+        <p style="font-size:13px;margin-bottom:8px">点击下载导入模板</p>
+        <a class="btn-link" onclick="showToast('模板已下载')">下载 Excel 模板</a>
+      </div>
+      <div style="text-align:center;padding:24px;background:#FAFAFA;border-radius:var(--radius);border:2px dashed var(--border);cursor:pointer;position:relative">
+        <p style="font-size:14px;margin-bottom:6px;color:var(--text-hint)">上传文件</p>
+        <p style="font-size:12px;color:var(--text-secondary)" id="importMemberFileName">点击或拖拽文件到此处上传</p>
+        <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="document.getElementById('importMemberFileName').textContent=this.files[0]?.name||'点击或拖拽文件到此处上传'">
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#E6F7FF;border-radius:var(--radius);font-size:11px;color:#1890FF">
+        提示：模板包含姓名、职务、联系方式三个字段，请按模板格式填写后上传。
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('importMemberModal')">取消</button><button class="btn btn-primary" onclick="closeModal('importMemberModal');showToast('成功导入 8 名成员')">确认导入</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：编辑成员 ===== -->
+<div class="modal-overlay" id="editMemberModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-header"><h3>编辑成员</h3><button class="modal-close" onclick="closeModal('editMemberModal')">✕</button></div>
+    <form id="editMemberForm" onsubmit="event.preventDefault();submitEditMember()">
+    <input type="hidden" id="editMemberId">
+    <div class="modal-body">
+      <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="editMemberName" placeholder="请输入成员姓名" required></div>
+      <div class="form-group"><label>职务 <span class="required">*</span></label><input type="text" id="editMemberRole" placeholder="请输入职务" required></div>
+      <div class="form-group"><label>联系方式 <span class="required">*</span></label><input type="tel" id="editMemberPhone" placeholder="请输入手机号" required></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editMemberModal')">取消</button><button type="submit" class="btn btn-primary">保存修改</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+// 批量发起组织筛选
+function filterBatchOrgs() {
+  const level = document.getElementById('batchLayerFilter').value;
+  const items = document.querySelectorAll('#batchOrgList label');
+  items.forEach(item => {
+    const orgLevel = item.dataset.level;
+    item.style.display = (!level || orgLevel === level) ? 'flex' : 'none';
+  });
+  updateBatchSelectAllCb();
+}
+function toggleAllBatchOrgs(checked) {
+  document.querySelectorAll('#batchOrgList input[type="checkbox"]').forEach(cb => {
+    if (cb.closest('label').style.display !== 'none') cb.checked = checked;
+  });
+}
+function updateBatchSelectAllCb() {
+  const allCbs = document.querySelectorAll('#batchOrgList input[type="checkbox"]');
+  const visibleCbs = [...allCbs].filter(cb => cb.closest('label').style.display !== 'none');
+  const allChecked = visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked);
+  const selectAllCb = document.getElementById('batchSelectAllCb');
+  if (selectAllCb) selectAllCb.checked = allChecked;
+}
+// 初始化批量组织选择
+function initBatchOrgList() {
+  const list = document.getElementById('batchOrgList');
+  // 按层级排序：一级在前，二级缩进，三级再缩进
+  const sortedOrgs = [...DATA.orgs].sort((a,b) => {
+    if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
+    if (a.level !== b.level) return a.level - b.level;
+    return a.name.localeCompare(b.name);
+  });
+  list.innerHTML = sortedOrgs.map(o =>
+    `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex"><input type="checkbox" checked onchange="updateBatchSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三'[o.level-1]}级</span>${o.name}</label>`
+  ).join('');
+}
+// 覆盖原有的openCreateInitModal
+const _origOpenCreateInitModal = openCreateInitModal;
+openCreateInitModal = function() {
+  _origOpenCreateInitModal();
+  initBatchOrgList();
+  if (typeof initCustomOrgList === 'function') initCustomOrgList();
+};
+// 初始化导出预览
+document.addEventListener('DOMContentLoaded', () => {
+  renderExportPreview('org');
+  renderQRModal();
+});
+function renderQRModal() {
+  // 重置已选倡议
+  qrSelectedInits.clear();
+  const inp = document.getElementById('qrInitPickInput');
+  if (inp) inp.value = '';
+  const dropdown = document.getElementById('qrInitPickDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  renderQROrgList();
+}
+
+// 倡议选择：点击输入框时弹出可勾选下拉，勾选项用分号回填到输入框
+let qrSelectedInits = new Set();
+function openQRInitPicker(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('qrInitPickDropdown');
+  const inits = DATA.initiatives.filter(i => !i.isDraft);
+  if (inits.length === 0) {
+    dropdown.innerHTML = `<div class="qr-init-empty">暂无可选倡议</div>`;
+  } else {
+    dropdown.innerHTML = inits.map(i => `
+      <label class="qr-init-opt">
+        <input type="checkbox" value="${i.id}" ${qrSelectedInits.has(i.id) ? 'checked' : ''} onchange="toggleQRInit(${i.id}, this.checked)">
+        <span style="flex:1">${i.title}</span>
+        ${i.customByChild ? '<span class="init-type-tag init-type-custom" style="font-size:10px;padding:0 6px">自定义倡议</span>' : ''}
+      </label>`).join('');
+  }
+  dropdown.style.display = 'block';
+}
+function toggleQRInit(id, checked) {
+  if (checked) qrSelectedInits.add(id); else qrSelectedInits.delete(id);
+  syncQRInitInput();
+}
+function syncQRInitInput() {
+  const inp = document.getElementById('qrInitPickInput');
+  if (!inp) return;
+  const titles = Array.from(qrSelectedInits).map(id => {
+    const i = DATA.initiatives.find(x => x.id === id);
+    return i ? i.title : '';
+  }).filter(Boolean);
+  inp.value = titles.join('；');
+  inp.title = inp.value; // 鼠标悬浮可看完整
+}
+// 点击其他位置时关闭下拉
+document.addEventListener('click', e => {
+  const dd = document.getElementById('qrInitPickDropdown');
+  const wrap = document.getElementById('qrInitPickWrap');
+  if (!dd || !wrap) return;
+  if (!wrap.contains(e.target)) dd.style.display = 'none';
+});
+
+function renderQROrgList() {
+  const orgList = document.getElementById('qrOrgList');
+  if (!orgList) return;
+  const sortedOrgs = [...DATA.orgs].sort((a,b) => {
+    if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
+    if (a.level !== b.level) return a.level - b.level;
+    return a.name.localeCompare(b.name);
+  });
+  orgList.innerHTML = sortedOrgs.map(o => `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}"><input type="checkbox" checked onchange="updateQRSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`).join('');
+}
+function filterQROrgByLayer() {
+  const val = document.getElementById('qrOrgLayerFilter').value;
+  const labels = document.querySelectorAll('#qrOrgList label');
+  // 统一逻辑：与发起倡议层级筛选一致——按层级显示/隐藏，不修改已勾选状态
+  labels.forEach(label => {
+    label.style.display = (!val || label.dataset.level === val) ? 'flex' : 'none';
+  });
+  updateQRSelectAllCb();
+}
+function toggleAllQROrgs(checked) {
+  document.querySelectorAll('#qrOrgList label').forEach(label => {
+    if (label.style.display !== 'none') {
+      label.querySelector('input[type="checkbox"]').checked = checked;
+    }
+  });
+}
+function updateQRSelectAllCb() {
+  const allLabels = document.querySelectorAll('#qrOrgList label');
+  const visibleCbs = [...allLabels].filter(l => l.style.display !== 'none').map(l => l.querySelector('input[type="checkbox"]'));
+  const allChecked = visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked);
+  const selectAllCb = document.getElementById('qrSelectAllCb');
+  if (selectAllCb) selectAllCb.checked = allChecked;
+}
+
+// ===== 批量地点 Excel 上传 =====
+function toggleBatchLocationPanel() {
+  const body = document.getElementById('batchLocationBody');
+  const arrow = document.getElementById('batchLocationArrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.classList.toggle('open', !isOpen);
+}
+
+function handleBatchLocationFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const dropzone = document.getElementById('batchLocationDropzone');
+  const placeholder = document.getElementById('batchLocationPlaceholder');
+  const fileInfo = document.getElementById('batchLocationFileInfo');
+  const fileName = document.getElementById('batchLocationFileName');
+  const fileSize = document.getElementById('batchLocationFileSize');
+
+  fileName.textContent = file.name;
+  const sizeKB = (file.size / 1024).toFixed(1);
+  fileSize.textContent = sizeKB > 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+
+  placeholder.style.display = 'none';
+  fileInfo.style.display = 'block';
+  dropzone.classList.add('has-file');
+
+  // 模拟解析预览
+  showBatchLocationPreview(file.name);
+}
+
+function removeBatchLocationFile(e) {
+  e.stopPropagation();
+  const dropzone = document.getElementById('batchLocationDropzone');
+  const placeholder = document.getElementById('batchLocationPlaceholder');
+  const fileInfo = document.getElementById('batchLocationFileInfo');
+  const fileInput = document.getElementById('batchLocationFileInput');
+  const preview = document.getElementById('batchLocationPreview');
+
+  placeholder.style.display = '';
+  fileInfo.style.display = 'none';
+  dropzone.classList.remove('has-file');
+  fileInput.value = '';
+  preview.style.display = 'none';
+}
+
+function showBatchLocationPreview(fileName) {
+  const preview = document.getElementById('batchLocationPreview');
+  // 模拟解析后的预览数据（用已勾选的组织生成示例）
+  const checkedOrgs = [];
+  document.querySelectorAll('#batchOrgList input[type="checkbox"]:checked').forEach(cb => {
+    const label = cb.closest('label');
+    if (label && label.style.display !== 'none') {
+      const name = label.textContent.replace(/[一二三]级/, '').trim();
+      checkedOrgs.push(name);
+    }
+  });
+  const demoData = checkedOrgs.slice(0, 5).map(name => ({
+    org: name,
+    location: name.includes('华东') ? '上海市浦东新区' : name.includes('华南') ? '广州市天河区' : name.includes('华北') ? '北京市朝阳区' : name.includes('华西') ? '成都市武侯区' : '深圳市南山区'
+  }));
+
+  if (demoData.length === 0) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  preview.innerHTML = `
+    <div style="margin-top:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text-secondary)">📋 解析预览（共匹配 ${demoData.length} 个组织）</span>
+      </div>
+      <div class="batch-location-preview">
+        <table>
+          <thead><tr><th>发起组织</th><th>活动地点</th></tr></thead>
+          <tbody>${demoData.map(d => `<tr><td>${d.org}</td><td>${d.location}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      ${checkedOrgs.length > 5 ? '<p style="font-size:11px;color:var(--text-hint);margin-top:4px;text-align:center">... 仅显示前 5 条</p>' : ''}
+    </div>
+  `;
+  preview.style.display = 'block';
+}
+
+function downloadBatchLocationTemplate() {
+  // 模拟下载模板
+  const checkedOrgs = [];
+  document.querySelectorAll('#batchOrgList input[type="checkbox"]:checked').forEach(cb => {
+    const label = cb.closest('label');
+    if (label && label.style.display !== 'none') {
+      const name = label.textContent.replace(/[一二三]级/, '').trim();
+      checkedOrgs.push(name);
+    }
+  });
+
+  // 生成CSV内容作为模板
+  let csv = '\uFEFF发起组织,活动地点\n';
+  checkedOrgs.forEach(name => {
+    csv += `${name},\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '批量活动地点模板.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('模板已下载，请填写活动地点后上传');
+}
+</script>
+</body>
+</html>
