@@ -252,14 +252,53 @@ function saveQRImage() {
 function getFilteredOrgs() {
   const selName = document.getElementById('orgCascaderValue')?.value || '';
   const search = document.getElementById('orgSearch')?.value?.toLowerCase() || '';
+  const levels = getSelectedLevels();
 
   return DATA.orgs.filter(o => {
     // 级联筛选：选中某个组织时，展示该组织及其所有下级
     if (selName && o.name !== selName && !(o.parents || []).includes(selName)) return false;
+    // 仅查看：勾选层级时只显示对应层级组织
+    if (levels.length && !levels.includes(o.level)) return false;
     if (search && !o.name.toLowerCase().includes(search) && !o.leader.toLowerCase().includes(search) && !o.id.toLowerCase().includes(search)) return false;
     return true;
   });
 }
+
+// ===== 仅查看·层级多选筛选 =====
+function getSelectedLevels() {
+  return Array.from(document.querySelectorAll('#levelFilterPanel input[type=checkbox]:checked')).map(c => parseInt(c.value));
+}
+function toggleLevelFilter(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('levelFilterPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+function applyLevelFilter() {
+  const levels = getSelectedLevels().sort((a,b)=>a-b);
+  const input = document.getElementById('levelFilterInput');
+  const clear = document.getElementById('levelFilterClear');
+  if (levels.length) {
+    input.value = levels.map(l => '一二三四五'[l-1] + '级').join('、');
+    clear.style.display = 'block';
+  } else {
+    input.value = '';
+    clear.style.display = 'none';
+  }
+  renderOrgTable();
+}
+function clearLevelFilter(e) {
+  if (e) e.stopPropagation();
+  document.querySelectorAll('#levelFilterPanel input[type=checkbox]').forEach(c => c.checked = false);
+  document.getElementById('levelFilterPanel').style.display = 'none';
+  applyLevelFilter();
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('levelFilter');
+  if (wrap && !wrap.contains(e.target)) {
+    const panel = document.getElementById('levelFilterPanel');
+    if (panel) panel.style.display = 'none';
+  }
+});
 
 // 渲染上级组织路径
 function orgParentPath(o) {
@@ -311,7 +350,11 @@ function toggleOrgCascader(e) {
   const panel = document.getElementById('orgCascaderPanel');
   const open = panel.style.display !== 'none';
   panel.style.display = open ? 'none' : 'flex';
-  if (!open) renderOrgCascaderColumns();
+  if (!open) {
+    // 未提交筛选时，从已选值同步展开路径（无值则收起到顶层）
+    if (!document.getElementById('orgCascaderValue').value) orgCascaderSel = [];
+    renderOrgCascaderColumns();
+  }
 }
 
 function renderOrgCascaderColumns() {
@@ -324,12 +367,20 @@ function renderOrgCascaderColumns() {
     cols += `<div class="org-cascader-col">` + items.map(o => {
       const active = orgCascaderSel[i] === o.name;
       const hasChild = DATA.orgs.some(x => x.level === o.level + 1 && (x.parents || [])[i] === o.name && x.parents.length === i + 1);
-      return `<div class="org-cascader-item ${active ? 'active' : ''}" onclick="selectOrgCascader(${i},'${o.name}')">
+      return `<div class="org-cascader-item ${active ? 'active' : ''}" onmouseenter="hoverOrgCascader(${i},'${o.name}')" onclick="selectOrgCascader(${i},'${o.name}')">
         <span>${o.name}</span>${hasChild ? '<span class="arrow">›</span>' : ''}
       </div>`;
     }).join('') + `</div>`;
   }
   panel.innerHTML = cols || `<div class="org-cascader-empty">暂无组织</div>`;
+}
+
+// 悬浮即展开下一级（不提交筛选）
+function hoverOrgCascader(colIdx, name) {
+  if (orgCascaderSel[colIdx] === name && orgCascaderSel.length === colIdx + 1) return;
+  orgCascaderSel = orgCascaderSel.slice(0, colIdx);
+  orgCascaderSel[colIdx] = name;
+  renderOrgCascaderColumns();
 }
 
 function selectOrgCascader(colIdx, name) {
@@ -338,7 +389,7 @@ function selectOrgCascader(colIdx, name) {
   document.getElementById('orgCascaderValue').value = name;
   document.getElementById('orgCascaderInput').value = orgCascaderSel.join(' / ');
   document.getElementById('orgCascaderClear').style.display = 'block';
-  renderOrgCascaderColumns();
+  document.getElementById('orgCascaderPanel').style.display = 'none';
   renderOrgTable();
 }
 
@@ -457,7 +508,7 @@ function submitCreateOrg() {
   const leader = document.getElementById('newOrgLeader').value.trim();
   const phone = document.getElementById('newOrgPhone').value.trim();
   const location = document.getElementById('newOrgLocation').value.trim();
-  if (!name || !leader || !phone || !location) { showToast('请填写所有必填项'); return; }
+  if (!name || !leader || !phone) { showToast('请填写所有必填项'); return; }
   if (!isTopLevel && !parent) { showToast('请选择归属上级组织'); return; }
   let level = 1, parents = [];
   if (!isTopLevel && parent) {
@@ -541,9 +592,173 @@ function executeDeleteOrg() {
   showToast(`组织「${name}」已删除`);
 }
 
-function exportOrgTable() {
-  const filtered = getFilteredOrgs();
-  showToast(`已导出 ${filtered.length} 个组织数据`);
+// ===== 通用：下载文件（带 BOM，Excel 可正常识别中文） =====
+function downloadCSV(filename, rows) {
+  const csv = rows.map(r => r.map(cell => {
+    const s = (cell == null ? '' : String(cell));
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ===== 批量创建组织：下载含示例的模板 =====
+function downloadOrgTemplate() {
+  const rows = [
+    ['一级组织','二级组织','三级组织','四级组织','五级组织','负责人姓名','负责人手机号','工作人员2姓名','工作人员2手机号'],
+    ['阳光基金会','华东分会','社区A队','浦东街道服务站','世纪村志愿组','周晓','13600004444','李雷','13700008888'],
+    ['阳光基金会','华东分会','社区B队','','','赵六','13600003456','','']
+  ];
+  downloadCSV('批量创建组织模板（含示例）.csv', rows);
+  showToast('模板已下载，含示例行可直接参考');
+}
+
+// ===== 批量创建组织：上传文件识别 =====
+let importParseResult = null;
+function openImportOrgModal() {
+  importParseResult = null;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importFileName').textContent = '点击或拖拽文件到此处上传';
+  const fileInput = document.getElementById('importOrgFile');
+  if (fileInput) fileInput.value = '';
+  document.getElementById('importOrgConfirmBtn').disabled = true;
+  openModal('importOrgModal');
+}
+function handleImportOrgFile(input) {
+  const file = input.files && input.files[0];
+  document.getElementById('importFileName').textContent = file ? file.name : '点击或拖拽文件到此处上传';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try { parseImportContent(e.target.result); }
+    catch (err) { showToast('文件解析失败，请使用标准模板'); }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function parseImportContent(text) {
+  // 解析 CSV（兼容模板表头），识别需新增组织与工作人员数量
+  const lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length <= 1) { showToast('文件内容为空'); return; }
+  const split = l => {
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"') { if (q && l[i+1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (c === ',' && !q) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur); return out.map(s => s.trim());
+  };
+  const existingNames = new Set(DATA.orgs.map(o => o.name));
+  const newOrgsMap = new Map(); // name -> {name, level, parents, staff}
+  let staffTotal = 0;
+  for (let r = 1; r < lines.length; r++) {
+    const cells = split(lines[r]);
+    const chain = [cells[0], cells[1], cells[2], cells[3], cells[4]].map(s => (s || '').trim());
+    // 收集本行工作人员（从第6列起，成对：姓名/手机号），第一位即负责人
+    let rowStaff = 0;
+    for (let c = 5; c < cells.length; c += 2) { if ((cells[c] || '').trim()) rowStaff++; }
+    let parents = [];
+    chain.forEach((nm, idx) => {
+      if (!nm) return;
+      const level = idx + 1;
+      if (!existingNames.has(nm) && !newOrgsMap.has(nm)) {
+        newOrgsMap.set(nm, { name: nm, level, parents: [...parents], staff: 0 });
+      }
+      parents.push(nm);
+    });
+    // 工作人员归属到最末级组织
+    const lastName = [...chain].reverse().find(n => n);
+    if (lastName && newOrgsMap.has(lastName)) { newOrgsMap.get(lastName).staff += rowStaff; }
+    staffTotal += rowStaff;
+  }
+  importParseResult = Array.from(newOrgsMap.values());
+  renderImportPreview(staffTotal);
+}
+
+function renderImportPreview(staffTotal) {
+  const preview = document.getElementById('importPreview');
+  const body = document.getElementById('importPreviewBody');
+  const summary = document.getElementById('importPreviewSummary');
+  const btn = document.getElementById('importOrgConfirmBtn');
+  if (!importParseResult || importParseResult.length === 0) {
+    preview.style.display = 'block';
+    summary.innerHTML = '未识别到需要新增的组织（可能均已存在），请检查文件内容。';
+    body.innerHTML = '';
+    btn.disabled = true;
+    return;
+  }
+  summary.innerHTML = `识别完成：本次将新增 <strong>${importParseResult.length}</strong> 个组织，新增工作人员 <strong>${staffTotal}</strong> 名。请确认后导入。`;
+  body.innerHTML = importParseResult.map(o => `
+    <tr>
+      <td>${o.name}</td>
+      <td><span class="layer-tag layer-${o.level}">${'一二三四五'[o.level-1]}级</span></td>
+      <td>${o.staff} 名</td>
+    </tr>`).join('');
+  preview.style.display = 'block';
+  btn.disabled = false;
+}
+
+function confirmImportOrgs() {
+  if (!importParseResult || importParseResult.length === 0) { showToast('没有可导入的组织'); return; }
+  // 按层级从小到大写入，保证上级先建立
+  const sorted = [...importParseResult].sort((a, b) => a.level - b.level);
+  sorted.forEach(item => {
+    if (DATA.orgs.some(o => o.name === item.name)) return;
+    const p = ['—','—','—','—'];
+    item.parents.forEach((nm, i) => { p[i] = nm; });
+    DATA.orgs.push({
+      id: 'ORG' + String(DATA.nextOrgId++).padStart(3, '0'),
+      name: item.name, level: item.level, parents: [...item.parents],
+      parent1: p[0], parent2: p[1], parent3: p[2], parent4: p[3],
+      leader: '待完善', phone: '00000000000', initCount: 0, postCount: 0, location: ''
+    });
+  });
+  const count = sorted.length;
+  importParseResult = null;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importFileName').textContent = '点击或拖拽文件到此处上传';
+  document.getElementById('importOrgFile').value = '';
+  document.getElementById('importOrgConfirmBtn').disabled = true;
+  closeModal('importOrgModal');
+  renderOrgTable();
+  showToast(`成功导入 ${count} 个组织`);
+}
+
+// ===== 批量导出组织 =====
+function openExportOrgModal() {
+  document.getElementById('exportLevelAll').checked = true;
+  document.querySelectorAll('.export-level-cb').forEach(c => c.checked = false);
+  openModal('exportOrgModal');
+}
+function toggleExportAllLevels(cb) {
+  if (cb.checked) document.querySelectorAll('.export-level-cb').forEach(c => c.checked = false);
+}
+function onExportLevelChange() {
+  const any = Array.from(document.querySelectorAll('.export-level-cb')).some(c => c.checked);
+  document.getElementById('exportLevelAll').checked = !any;
+}
+function confirmExportOrgs() {
+  const all = document.getElementById('exportLevelAll').checked;
+  const levels = Array.from(document.querySelectorAll('.export-level-cb:checked')).map(c => parseInt(c.value));
+  const list = DATA.orgs.filter(o => all || levels.includes(o.level));
+  if (list.length === 0) { showToast('所选层级暂无组织'); return; }
+  const rows = [['组织ID','组织名称','层级','上级组织','负责人','手机号']];
+  list.forEach(o => {
+    rows.push([
+      o.id, o.name, ('一二三四五'[o.level-1] + '级'),
+      (o.parents && o.parents.length ? o.parents.join(' / ') : '—'),
+      o.leader, o.phone
+    ]);
+  });
+  downloadCSV('组织列表导出.csv', rows);
+  closeModal('exportOrgModal');
+  showToast(`已导出 ${list.length} 个组织数据`);
 }
 
 // ========================

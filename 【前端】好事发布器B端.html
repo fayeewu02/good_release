@@ -42,8 +42,8 @@
     <div class="content-header">
       <div class="breadcrumb"><span id="breadcrumbPage">体系管理</span></div>
       <div class="header-actions" id="headerActions">
-        <button class="btn" onclick="openModal('importOrgModal')">批量导入</button>
-        <button class="btn" onclick="exportOrgTable()">批量导出</button>
+        <button class="btn" onclick="openImportOrgModal()">批量导入</button>
+        <button class="btn" onclick="openExportOrgModal()">批量导出</button>
         <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
       </div>
     </div>
@@ -60,7 +60,21 @@
             <div class="org-cascader-panel" id="orgCascaderPanel" style="display:none"></div>
           </div>
           <div class="filter-sep"></div>
-          <input type="text" id="orgSearch" placeholder="搜索组织名称 / 负责人..." style="width:200px">
+          <span class="filter-label">组织名称/负责人：</span>
+          <input type="text" id="orgSearch" placeholder="输入组织名称或负责人，支持模糊搜索" style="width:220px" oninput="renderOrgTable()">
+          <div class="filter-sep"></div>
+          <span class="filter-label">仅查看</span>
+          <div class="level-filter" id="levelFilter">
+            <input type="text" id="levelFilterInput" readonly placeholder="全部层级" onclick="toggleLevelFilter(event)">
+            <span class="org-cascader-clear" id="levelFilterClear" onclick="clearLevelFilter(event)" style="display:none">✕</span>
+            <div class="level-filter-panel" id="levelFilterPanel" style="display:none">
+              <label class="level-filter-opt"><input type="checkbox" value="1" onchange="applyLevelFilter()"> 一级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="2" onchange="applyLevelFilter()"> 二级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="3" onchange="applyLevelFilter()"> 三级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="4" onchange="applyLevelFilter()"> 四级组织</label>
+              <label class="level-filter-opt"><input type="checkbox" value="5" onchange="applyLevelFilter()"> 五级组织</label>
+            </div>
+          </div>
         </div>
         <div class="panel">
           <div class="panel-header"><h3 id="orgCount">共 6 个组织</h3></div>
@@ -361,7 +375,7 @@
         <div class="form-group"><label>负责人姓名 <span class="required">*</span></label><input type="text" id="newOrgLeader" placeholder="请输入负责人姓名" required></div>
         <div class="form-group"><label>负责人手机号 <span class="required">*</span></label><input type="tel" id="newOrgPhone" placeholder="请输入手机号" required></div>
       </div>
-      <div class="form-group"><label>组织地点 <span class="required">*</span></label><input type="text" id="newOrgLocation" placeholder="请输入组织所在地点" required></div>
+      <div class="form-group"><label>组织地点</label><input type="text" id="newOrgLocation" placeholder="请输入组织所在地点（选填）"></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('createOrgModal')">取消</button><button type="submit" class="btn btn-primary">确认创建</button></div>
     </form>
@@ -388,41 +402,72 @@
   </div>
 </div>
 
-<!-- ===== 弹窗：批量导入 ===== -->
+<!-- ===== 弹窗：批量创建组织 ===== -->
 <div class="modal-overlay" id="importOrgModal">
   <div class="modal">
-    <div class="modal-header"><h3>批量导入组织</h3><button class="modal-close" onclick="closeModal('importOrgModal')">✕</button></div>
+    <div class="modal-header"><h3>批量创建组织</h3><button class="modal-close" onclick="closeModal('importOrgModal')">✕</button></div>
     <div class="modal-body">
-      <div style="background:#F6FFED;border:1px solid #B7EB8F;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px">
-        <p style="font-size:13px;font-weight:600;color:#389E0D;margin-bottom:6px">一张表创建全部层级</p>
+      <div style="background:#F6FFED;border:1px solid #B7EB8F;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
         <p style="font-size:12px;color:var(--text-secondary);line-height:1.7">
-          每行填写一个最末级组织的完整链路（1~5 级组织名称），系统会自动按层级名称识别并创建/复用各级组织，一次性建立整个组织树。<br>
-          每行还可填写该组织的<strong>工作人员1 姓名/手机号、工作人员2 姓名/手机号……</strong>，支持多名工作人员。
+          每行填写一条从一级到末级的完整组织链路，系统自动按名称识别层级并创建/复用。<br>
+          每行第一位人员即该组织<strong>负责人</strong>，其余为普通工作人员。
         </p>
       </div>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px">
-        <table class="data-table" style="font-size:11px;min-width:760px">
+        <table class="data-table" style="font-size:11px;min-width:780px">
           <thead><tr>
             <th>一级组织</th><th>二级组织</th><th>三级组织</th><th>四级组织</th><th>五级组织</th>
-            <th>工作人员1姓名</th><th>工作人员1手机号</th><th>工作人员2姓名</th><th>工作人员2手机号</th>
+            <th>负责人姓名</th><th>负责人手机号</th><th>工作人员2姓名</th><th>工作人员2手机号</th>
           </tr></thead>
           <tbody>
-            <tr><td>阳光基金会</td><td>华东分会</td><td>社区A队</td><td>浦东街道服务站</td><td>世纪村志愿组</td><td>周晓</td><td>136****4444</td><td>李雷</td><td>137****8888</td></tr>
-            <tr><td>阳光基金会</td><td>华东分会</td><td>社区B队</td><td></td><td></td><td>赵六</td><td>136****3456</td><td></td><td></td></tr>
+            <tr><td>阳光基金会</td><td>华东分会</td><td>社区A队</td><td>浦东街道服务站</td><td>世纪村志愿组</td><td>周晓</td><td>13600004444</td><td>李雷</td><td>13700008888</td></tr>
+            <tr><td>阳光基金会</td><td>华东分会</td><td>社区B队</td><td></td><td></td><td>赵六</td><td>13600003456</td><td></td><td></td></tr>
           </tbody>
         </table>
       </div>
       <div style="text-align:center;padding:16px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
-        <p style="font-size:13px;margin-bottom:8px">下载标准模板后按上表格式填写</p>
-        <a class="btn-link" onclick="showToast('模板已下载')">下载 Excel 模板</a>
+        <p style="font-size:13px;margin-bottom:8px">模板已内置上表示例，下载后按格式填写即可</p>
+        <a class="btn-link" onclick="downloadOrgTemplate()">下载 Excel 模板（含示例）</a>
       </div>
       <div style="text-align:center;padding:24px;background:#FAFAFA;border-radius:var(--radius);border:2px dashed var(--border);cursor:pointer;position:relative" id="importDropZone">
         <p style="font-size:14px;margin-bottom:6px;color:var(--text-hint)">上传文件</p>
         <p style="font-size:12px;color:var(--text-secondary)" id="importFileName">点击或拖拽文件到此处上传</p>
-        <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="document.getElementById('importFileName').textContent=this.files[0]?.name||'点击或拖拽文件到此处上传'">
+        <input type="file" id="importOrgFile" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="handleImportOrgFile(this)">
+      </div>
+      <!-- 识别结果确认区 -->
+      <div id="importPreview" style="display:none;margin-top:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <div style="background:#E6F4FF;padding:10px 14px;font-size:12px;color:#1677FF;line-height:1.6" id="importPreviewSummary"></div>
+        <div style="max-height:220px;overflow-y:auto">
+          <table class="data-table" style="font-size:12px">
+            <thead><tr><th>组织名称</th><th>组织层级</th><th>本次新增工作人员</th></tr></thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal('importOrgModal')">取消</button><button class="btn btn-primary" onclick="closeModal('importOrgModal');showToast('成功导入 15 个组织')">确认导入</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('importOrgModal')">取消</button><button class="btn btn-primary" id="importOrgConfirmBtn" onclick="confirmImportOrgs()" disabled>确认导入</button></div>
+  </div>
+</div>
+
+<!-- ===== 弹窗：批量导出组织 ===== -->
+<div class="modal-overlay" id="exportOrgModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><h3>批量导出组织</h3><button class="modal-close" onclick="closeModal('exportOrgModal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">请选择要导出的组织层级，导出内容包含：组织ID、组织名称、层级、上级组织、负责人、手机号。</p>
+      <div class="form-group">
+        <label style="margin-bottom:8px;display:block">导出层级</label>
+        <label class="level-filter-opt" style="padding:6px 0"><input type="checkbox" id="exportLevelAll" checked onchange="toggleExportAllLevels(this)"> <strong>全部层级</strong></label>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px">
+          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="1" onchange="onExportLevelChange()"> 一级</label>
+          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="2" onchange="onExportLevelChange()"> 二级</label>
+          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="3" onchange="onExportLevelChange()"> 三级</label>
+          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="4" onchange="onExportLevelChange()"> 四级</label>
+          <label class="level-filter-opt"><input type="checkbox" class="export-level-cb" value="5" onchange="onExportLevelChange()"> 五级</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('exportOrgModal')">取消</button><button class="btn btn-primary" onclick="confirmExportOrgs()">确认导出</button></div>
   </div>
 </div>
 
