@@ -1309,12 +1309,21 @@ function editDraft(id) {
   document.getElementById('createInitLocation').value = d.location || '';
   document.getElementById('createInitEditId').value = d.id;
   document.getElementById('createInitModalTitle').textContent = '编辑草稿';
-  document.getElementById('batchSwitch').checked = false;
-  document.getElementById('batchOrgSection').style.display = 'none';
-  document.getElementById('customByChildSection').style.display = 'none';
+  // 编辑草稿默认开启「批量发起」，复用与「发起倡议」一致的层级选择组件
+  document.getElementById('batchSwitch').checked = true;
+  document.getElementById('batchOrgSection').style.display = 'block';
+  document.getElementById('customByChildSection').style.display = 'flex';
   document.getElementById('customByChildSwitch').checked = false;
   document.getElementById('customByChildBlock').style.display = 'none';
   document.getElementById('unifiedContentBlock').style.display = 'block';
+  // 渲染层级选择列表（与发起倡议复用同一渲染函数）
+  if (typeof initBatchOrgList === 'function') initBatchOrgList();
+  if (typeof initCustomOrgList === 'function') initCustomOrgList();
+  // 重置筛选器为「全部层级」+ 全选
+  const lf = document.getElementById('batchLayerFilter');
+  if (lf) lf.value = '';
+  const sa = document.getElementById('batchSelectAllCb');
+  if (sa) sa.checked = true;
   openModal('createInitModal');
 }
 
@@ -1870,10 +1879,10 @@ function renderPostListView(pageData, status) {
       : (init?.title || '<span style="color:var(--text-hint)">—</span>');
     html += `<tr${status==='hidden'?' style="opacity:.6"':''}>
       <td><input type="checkbox" value="${p.id}" onchange="togglePostSelect(${p.id},this.checked)" ${isChecked?'checked':''} ${isOpsHidden?'disabled title="运营隐藏，不可批量操作"':''}></td>
-      <td>
+      <td onclick="openPostDetail(${p.id})" style="cursor:pointer" title="点击查看帖子详情">
         <div class="post-content-cell">
           <div class="post-thumb" style="background:${p.color}"></div>
-          <div class="post-content-text">${p.text}</div>
+          <div class="post-content-text post-content-clickable">${p.text}</div>
         </div>
       </td>
       <td style="font-size:12px;color:var(--text-secondary)">${initContent}</td>
@@ -2119,8 +2128,12 @@ function renderPostDetail() {
     hiddenRow.style.display = 'none';
   }
 
-  // 多图轮播
-  detailImages = (p.images && p.images.length) ? p.images : [p.color];
+  // 多图轮播：若帖子未提供 images，则基于 color 生成 2-3 张演示图，让左右切换体验可感知
+  if (p.images && p.images.length) {
+    detailImages = p.images;
+  } else {
+    detailImages = buildDemoImages(p.color);
+  }
   detailImgIndex = 0;
   renderDetailCarousel();
 
@@ -2151,8 +2164,17 @@ function renderDetailCarousel() {
   track.innerHTML = detailImages.map(img => `<div class="detail-carousel-slide" style="background:${img}"></div>`).join('');
   track.style.transform = `translateX(-${detailImgIndex * 100}%)`;
   const multi = detailImages.length > 1;
-  document.querySelector('#detailCarousel .carousel-prev').style.display = multi ? 'flex' : 'none';
-  document.querySelector('#detailCarousel .carousel-next').style.display = multi ? 'flex' : 'none';
+  const prevBtn = document.querySelector('#detailCarousel .carousel-prev');
+  const nextBtn = document.querySelector('#detailCarousel .carousel-next');
+  // 多图时始终显示左右箭头按钮，单图时隐藏
+  if (prevBtn) {
+    prevBtn.style.display = multi ? 'flex' : 'none';
+    prevBtn.disabled = !multi;
+  }
+  if (nextBtn) {
+    nextBtn.style.display = multi ? 'flex' : 'none';
+    nextBtn.disabled = !multi;
+  }
   const dots = document.getElementById('detailCarouselDots');
   dots.innerHTML = multi ? detailImages.map((_, i) => `<span class="carousel-dot ${i === detailImgIndex ? 'active' : ''}" onclick="carouselGoto(${i})"></span>`).join('') : '';
   const counter = document.getElementById('detailCarouselCounter');
@@ -2162,6 +2184,7 @@ function renderDetailCarousel() {
 
 function carouselStep(dir) {
   const n = detailImages.length;
+  if (n <= 1) return;
   detailImgIndex = (detailImgIndex + dir + n) % n;
   renderDetailCarousel();
 }
@@ -2170,6 +2193,32 @@ function carouselGoto(i) {
   detailImgIndex = i;
   renderDetailCarousel();
 }
+
+// 基于帖子主色生成 2-3 张演示图（用于未提供 images 字段的旧 mock 数据）
+function buildDemoImages(baseColor) {
+  if (!baseColor || baseColor === '#E8E8E8') return [baseColor || '#E8E8E8'];
+  const palette = [
+    'linear-gradient(135deg,#A8E6CF,#DCEDC1)',
+    'linear-gradient(135deg,#FFD3B6,#FFAAA5)',
+    'linear-gradient(135deg,#B5EAD7,#C7CEEA)',
+    'linear-gradient(135deg,#BBDEFB,#90CAF9)',
+    'linear-gradient(135deg,#FFF9C4,#FFF59D)',
+    'linear-gradient(135deg,#D1C4E9,#B39DDB)'
+  ];
+  // 取主色 + 随机选 2 个色板色作为另外两张图
+  const others = palette.filter(c => c !== baseColor);
+  const seed = (baseColor.length * 7) % others.length;
+  return [baseColor, others[seed], others[(seed + 2) % others.length]];
+}
+
+// 帖子详情弹窗内：左右方向键切换图片
+document.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('postDetailModal');
+  if (!modal || !modal.classList.contains('show')) return;
+  if (detailImages.length <= 1) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); carouselStep(-1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); carouselStep(1); }
+});
 
 function navPostDetail(dir) {
   const next = detailNavIndex + dir;
