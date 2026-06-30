@@ -1440,11 +1440,113 @@ function switchToTopic(initId) {
   if (!init) return;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-topic').classList.add('active');
-  document.getElementById('topicTitle').textContent = init.title;
-  document.getElementById('topicDesc').textContent = init.desc;
-  document.getElementById('topicBg').style.backgroundImage = init.color.startsWith('linear') ? init.color : `url(${init.color})`;
+  document.getElementById('topicTitle').textContent = init.customByChild ? (init.remark || init.title) : init.title;
+  document.getElementById('topicDesc').textContent = init.customByChild
+    ? `下级自定义倡议 · 由 ${init.orgCount || 0} 个下级组织自行发起`
+    : (init.desc || (init.location ? '📍 ' + init.location : '不限活动地点'));
+  // 自定义倡议显示"下级倡议管理"Tab
+  const childTab = document.getElementById('topicTabChildInit');
+  if (childTab) childTab.style.display = init.customByChild ? '' : 'none';
+  // 默认切到帖子管理 Tab
+  switchTopicMainTab('post');
   renderTopicStats();
   switchPostTab('showing');
+}
+
+function onTopicFilterChange() {
+  renderTopicStats();
+  renderPosts();
+}
+
+/* ===== 话题页主 Tab 切换：帖子管理 / 下级倡议管理 ===== */
+function switchTopicMainTab(tab) {
+  document.querySelectorAll('#topicMainTabs .tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.topictab === tab);
+  });
+  const postPanel = document.getElementById('topicPanel-post');
+  const childPanel = document.getElementById('topicPanel-childinit');
+  if (postPanel) postPanel.style.display = tab === 'post' ? 'block' : 'none';
+  if (childPanel) childPanel.style.display = tab === 'childinit' ? 'block' : 'none';
+  if (tab === 'childinit') renderChildInitList();
+}
+
+/* ===== 下级倡议管理（仅自定义倡议） ===== */
+// 自定义倡议下，下级组织自行发起的子倡议（mock）
+DATA.childInitiatives = {
+  // initId 8: 0628自定义倡议
+  8: [
+    {id:801, orgName:'华东分会', orgLevel:2, title:'河岸清洁志愿行动', location:'上海黄浦江畔', date:'2026-06-29', postCount:42, status:'showing'},
+    {id:802, orgName:'华南分会', orgLevel:2, title:'社区垃圾分类宣传', location:'广州天河区', date:'2026-06-29', postCount:30, status:'showing'},
+    {id:803, orgName:'华北分会', orgLevel:2, title:'公园环境维护日', location:'北京朝阳区', date:'2026-06-28', postCount:18, status:'showing'},
+    {id:804, orgName:'社区A队', orgLevel:3, title:'楼道公共空间整理', location:'本社区', date:'2026-06-28', postCount:15, status:'showing'},
+    {id:805, orgName:'社区B队', orgLevel:3, title:'敬老院探访', location:'合肥蜀山', date:'2026-06-29', postCount:12, status:'showing'},
+    {id:806, orgName:'志愿先锋队', orgLevel:3, title:'广告内容（已被本级隐藏）', location:'石家庄', date:'2026-06-29', postCount:0, status:'hidden'}
+  ]
+};
+
+function getChildInitsForCurrentTopic() {
+  return DATA.childInitiatives[DATA.currentTopicId] || [];
+}
+
+// 给帖子列表展示倡议内容用：通过组织名找子倡议
+function getChildInitTitleForOrg(orgName) {
+  const list = getChildInitsForCurrentTopic();
+  const f = list.find(c => c.orgName === orgName);
+  return f ? f.title : '';
+}
+
+function renderChildInitList() {
+  const tbody = document.getElementById('childInitTableBody');
+  if (!tbody) return;
+  const kw = (document.getElementById('childInitOrgSearch')?.value || '').toLowerCase();
+  const stat = document.getElementById('childInitStatusFilter')?.value || '';
+  const list = getChildInitsForCurrentTopic().filter(c => {
+    if (kw && !c.orgName.toLowerCase().includes(kw)) return false;
+    if (stat && c.status !== stat) return false;
+    return true;
+  });
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-hint)">暂无下级倡议</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c => {
+    const statusTag = c.status === 'hidden'
+      ? '<span class="post-status-tag status-hidden">已隐藏</span>'
+      : '<span class="post-status-tag status-showing">展示中</span>';
+    const action = c.status === 'hidden'
+      ? `<a class="btn-link" style="color:var(--green)" onclick="toggleChildInitStatus(${c.id},'showing')">恢复展示</a>`
+      : `<a class="btn-link btn-danger" onclick="toggleChildInitStatus(${c.id},'hidden')">隐藏</a>`;
+    return `<tr${c.status==='hidden'?' style="opacity:.6"':''}>
+      <td>${c.orgName}</td>
+      <td><span class="layer-tag layer-${c.orgLevel}">${'一二三四五'[c.orgLevel-1]}级</span></td>
+      <td>${c.title}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${c.location || '<span style="color:var(--text-hint)">不限</span>'}</td>
+      <td>${(c.postCount||0).toLocaleString()}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${c.date}</td>
+      <td>${statusTag}</td>
+      <td class="actions-cell">${action}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleChildInitStatus(id, newStatus) {
+  const list = getChildInitsForCurrentTopic();
+  const c = list.find(x => x.id === id);
+  if (!c) return;
+  c.status = newStatus;
+  renderChildInitList();
+  showToast(newStatus === 'hidden' ? `已隐藏「${c.orgName}」发起的倡议` : `已恢复展示「${c.orgName}」发起的倡议`);
+}
+
+/* ===== 导出倡议二维码（每张含组织名称） ===== */
+function confirmExportInitQR() {
+  const inits = Array.from(document.querySelectorAll('#qrInitList input[type=checkbox]:checked')).map(cb => cb.value);
+  const orgs = Array.from(document.querySelectorAll('#qrOrgList input[type=checkbox]:checked')).map(cb => cb.closest('label').textContent.trim());
+  if (inits.length === 0) { showToast('请至少选择一个倡议'); return; }
+  if (orgs.length === 0) { showToast('请至少选择一个组织'); return; }
+  const total = inits.length * orgs.length;
+  closeModal('exportQRModal');
+  showToast(`已生成 ${total} 张二维码（每张含「组织名称」标识），Excel 下载中...`);
 }
 
 function getTopicFilters() {
@@ -1538,7 +1640,12 @@ function getFilteredPosts(status) {
   const { levelFilter, orgFilter, dateFrom, dateTo, contentSearch } = getTopicFilters();
   return DATA.posts.filter(p => {
     if (p.initId !== initId) return false;
-    if (p.status !== status) return false;
+    // 已删除"待审核"Tab，将 pending 合并到"已隐藏"展示
+    if (status === 'hidden') {
+      if (p.status !== 'hidden' && p.status !== 'pending') return false;
+    } else {
+      if (p.status !== status) return false;
+    }
     if (levelFilter && p.orgLevel !== parseInt(levelFilter)) return false;
     if (orgFilter && p.org !== orgFilter) return false;
     const pDate = p.date.slice(0,10);
@@ -1595,20 +1702,19 @@ function changePostPageSize() {
 
 function renderPosts() {
   const status = currentPostTab;
+  // 已删除待审核，统一将 pending 归入"已隐藏"或忽略；这里默认不展示 pending
   const filtered = getFilteredPosts(status);
   const container = document.getElementById('postsContainer');
-  // 更新 Tab 计数
+  // 更新 Tab 计数（仅 展示中 / 已隐藏）
   const allPosts = DATA.posts.filter(p => p.initId === DATA.currentTopicId);
   const tabs = document.querySelectorAll('#postTabs .tab');
   const showingCount = allPosts.filter(p=>p.status==='showing').length;
-  const pendingCount = allPosts.filter(p=>p.status==='pending').length;
-  const hiddenCount = allPosts.filter(p=>p.status==='hidden').length;
-  tabs[0].textContent = `展示中 (${showingCount})`;
-  tabs[1].innerHTML = `待审核${pendingCount > 0 ? ` <span class="tab-pending-badge">${pendingCount}</span>` : ' (0)'}`;
-  tabs[2].textContent = `已隐藏 (${hiddenCount})`;
+  const hiddenCount = allPosts.filter(p=>p.status==='hidden' || p.status==='pending').length;
+  if (tabs[0]) tabs[0].textContent = `展示中 (${showingCount})`;
+  if (tabs[1]) tabs[1].textContent = `已隐藏 (${hiddenCount})`;
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty-state"><p>${status==='pending'?'暂无待审核帖子':status==='hidden'?'暂无已隐藏帖子':'暂无展示中的帖子'}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><p>${status==='hidden'?'暂无已隐藏帖子':'暂无展示中的帖子'}</p></div>`;
     hidePagination();
     hideBatchBar();
     return;
@@ -1633,11 +1739,15 @@ function renderPosts() {
 function renderPostListView(pageData, status) {
   const container = document.getElementById('postsContainer');
   const showCheckbox = true; // 列表视图始终显示勾选框
+  // 当前倡议：自定义倡议时，每个帖子的"倡议内容"来自下级组织的子倡议；统一倡议时则统一显示主倡议内容
+  const init = DATA.initiatives.find(i => i.id === DATA.currentTopicId);
+  const isCustom = !!(init && init.customByChild);
   let html = `<div class="post-list-view">
     <table class="data-table">
       <thead><tr>
         <th style="width:36px"><input type="checkbox" id="postSelectAll" onchange="toggleSelectAllPosts(this.checked)" ${selectedPostIds.size > 0 && selectedPostIds.size === pageData.length ? 'checked' : ''}></th>
         <th>帖子内容</th>
+        <th style="width:180px">倡议内容</th>
         <th style="width:90px">发帖人</th>
         <th style="width:100px">所属组织</th>
         <th style="width:130px">发布时间</th>
@@ -1649,20 +1759,21 @@ function renderPostListView(pageData, status) {
   pageData.forEach(p => {
     const isChecked = selectedPostIds.has(p.id);
     const isOpsHidden = p.status === 'hidden' && p.hiddenBy === 'ops';
-    let statusLabel = {showing:'展示中',pending:'待审核',hidden:'已隐藏'}[p.status];
+    let statusLabel = {showing:'展示中',pending:'机构隐藏',hidden:'已隐藏'}[p.status];
     if (p.status === 'hidden') statusLabel = isOpsHidden ? '运营隐藏' : '机构隐藏';
-    const statusClass = 'status-' + p.status;
+    const statusClass = 'status-' + (p.status === 'pending' ? 'hidden' : p.status);
     let actions = '';
     if (status === 'showing') {
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link btn-danger" onclick="setPostStatus(${p.id},'hidden')">隐藏</a>`;
-    } else if (status === 'pending') {
-      actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link" style="color:var(--green)" onclick="setPostStatus(${p.id},'showing')">展示</a><a class="btn-link btn-danger" onclick="setPostStatus(${p.id},'hidden')">隐藏</a>`;
     } else if (isOpsHidden) {
-      // 运营隐藏：机构端不可操作
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><span class="btn-link" style="color:var(--text-hint);cursor:not-allowed" title="该帖子由平台运营隐藏，机构无法恢复">运营隐藏·不可操作</span>`;
     } else {
       actions = `<a class="btn-link" onclick="openPostDetail(${p.id})">查看</a><a class="btn-link" style="color:var(--green)" onclick="setPostStatus(${p.id},'showing')">恢复</a>`;
     }
+    // 倡议内容：自定义倡议下，从下级 mock 子倡议表里取；统一倡议则取主倡议
+    const initContent = isCustom
+      ? (getChildInitTitleForOrg(p.org) || '<span style="color:var(--text-hint)">—</span>')
+      : (init?.title || '<span style="color:var(--text-hint)">—</span>');
     html += `<tr${status==='hidden'?' style="opacity:.6"':''}>
       <td><input type="checkbox" value="${p.id}" onchange="togglePostSelect(${p.id},this.checked)" ${isChecked?'checked':''} ${isOpsHidden?'disabled title="运营隐藏，不可批量操作"':''}></td>
       <td>
@@ -1671,6 +1782,7 @@ function renderPostListView(pageData, status) {
           <div class="post-content-text">${p.text}</div>
         </div>
       </td>
+      <td style="font-size:12px;color:var(--text-secondary)">${initContent}</td>
       <td>${p.user}</td>
       <td>${p.org}</td>
       <td style="font-size:12px;color:var(--text-secondary)">${p.date}</td>

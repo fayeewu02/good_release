@@ -238,74 +238,112 @@
       <!-- ============ 倡议话题页 ============ -->
       <div class="page" id="page-topic">
         <div style="margin-bottom:12px"><a class="btn-link" onclick="backToInitiative()" style="font-size:13px">← 返回好事发布器</a></div>
-        <div class="topic-header topic-header-compact">
-          <div class="bg" id="topicBg" style="background:linear-gradient(135deg,#06B57A,#34D399)">
-            <div class="text-overlay">
-              <div class="topic-header-content">
-                <div class="topic-header-left">
-                  <h2 id="topicTitle">社区清洁日</h2>
-                  <p id="topicDesc">倡议说明</p>
-                </div>
-                <div class="topic-header-actions">
-                  <button class="btn topic-header-btn" onclick="exportTopicInitQR()">导出倡议二维码</button>
-                  <button class="btn topic-header-btn" onclick="openTopicOrgMgmtModal()">组织管理</button>
-                </div>
+        <!-- 简洁标题头：黑字、红色按钮 -->
+        <div class="topic-header-plain">
+          <div class="topic-header-plain-left">
+            <h2 id="topicTitle">社区清洁日</h2>
+            <p id="topicDesc">倡议说明</p>
+          </div>
+          <div class="topic-header-plain-actions">
+            <button class="btn btn-primary" onclick="exportTopicInitQR()">导出倡议二维码</button>
+            <button class="btn btn-primary" onclick="openTopicOrgMgmtModal()">组织管理</button>
+          </div>
+        </div>
+
+        <!-- 顶部统计卡：保持独立 -->
+        <div class="topic-stats topic-stats-card">
+          <div class="stat-item"><div class="num" id="topicOrgCount">25</div><div class="lbl">发起组织数（本级+下级）</div></div>
+          <div class="stat-item"><div class="num" id="topicUserCount">1,234</div><div class="lbl">参与人数</div></div>
+          <div class="stat-item"><div class="num" id="topicPostCount">5,234</div><div class="lbl">发帖数</div></div>
+        </div>
+
+        <!-- 话题页主Tab：帖子管理 + 下级倡议管理（自定义倡议才显示） -->
+        <div class="tabs topic-main-tabs-row" id="topicMainTabs">
+          <div class="tab active" data-topictab="post" onclick="switchTopicMainTab('post')">帖子管理</div>
+          <div class="tab" data-topictab="childinit" id="topicTabChildInit" style="display:none" onclick="switchTopicMainTab('childinit')">下级倡议管理</div>
+        </div>
+
+        <!-- ===== 帖子管理 Panel（筛选+帖子合并为一个整体） ===== -->
+        <div class="topic-tab-panel" id="topicPanel-post">
+          <div class="panel topic-post-panel">
+            <!-- 筛选区 -->
+            <div class="topic-post-filter">
+              <span class="filter-label">组织/层级</span>
+              <select id="topicLevelFilter" onchange="onTopicFilterChange()">
+                <option value="">全部组织（本级及下级）</option>
+                <option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
+              </select>
+              <div style="position:relative;display:inline-block">
+                <input type="text" id="topicOrgSearch" placeholder="搜索组织名称..." style="width:160px" oninput="filterTopicOrgDropdown()" onfocus="showTopicOrgDropdown()" autocomplete="off">
+                <input type="hidden" id="topicOrgFilter" value="">
+                <div class="topic-org-dropdown" id="topicOrgDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+              </div>
+              <div class="filter-sep"></div>
+              <span class="filter-label">发布时间</span>
+              <input type="date" id="topicDateFrom" value="2026-06-01" onchange="onTopicFilterChange()">
+              <span style="color:var(--text-hint)">至</span>
+              <input type="date" id="topicDateTo" value="2026-06-30" onchange="onTopicFilterChange()">
+              <div class="filter-sep"></div>
+              <span class="filter-label">帖子内容</span>
+              <input type="text" id="topicContentSearch" placeholder="搜索帖子内容..." style="width:160px" oninput="onTopicFilterChange()">
+            </div>
+            <!-- Tab：展示中 / 已隐藏（去掉待审核） -->
+            <div class="tabs topic-post-tabs" id="postTabs">
+              <div class="tab active" onclick="switchPostTab('showing')">展示中 (4)</div>
+              <div class="tab" onclick="switchPostTab('hidden')">已隐藏 (2)</div>
+            </div>
+            <!-- 批量操作栏 -->
+            <div class="batch-action-bar" id="batchActionBar" style="display:none;margin:0 16px 8px">
+              <span>已选择 <span class="count" id="batchSelectedCount">0</span> 条帖子</span>
+              <button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="batchSetStatus('showing')" id="batchShowBtn">批量展示</button>
+              <button class="btn btn-sm" style="color:#E84C3D;border-color:#E84C3D" onclick="batchSetStatus('hidden')" id="batchHideBtn">批量隐藏</button>
+              <button class="btn btn-sm" onclick="clearBatchSelection()">取消选择</button>
+            </div>
+            <div id="postsContainer"></div>
+            <!-- 底部分页器 -->
+            <div class="post-pagination-bar" id="postPaginationBar" style="display:none">
+              <div class="page-info" id="postPageInfo">共 0 条数据</div>
+              <div class="page-right">
+                <select id="postPageSize" onchange="changePostPageSize()" class="page-size-select">
+                  <option value="10">10 条/页</option>
+                  <option value="20" selected>20 条/页</option>
+                  <option value="50">50 条/页</option>
+                </select>
+                <div class="page-controls" id="postPageControls"></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="topic-filter-stats-card">
-          <div class="filter-bar">
-            <span class="filter-label">组织/层级</span>
-            <select id="topicLevelFilter">
-              <option value="">全部组织（本级及下级）</option>
-              <option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
-            </select>
-            <div style="position:relative;display:inline-block">
-              <input type="text" id="topicOrgSearch" placeholder="搜索组织名称..." style="width:160px" oninput="filterTopicOrgDropdown()" onfocus="showTopicOrgDropdown()" autocomplete="off">
-              <input type="hidden" id="topicOrgFilter" value="">
-              <div class="topic-org-dropdown" id="topicOrgDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+
+        <!-- ===== 下级倡议管理 Panel（仅自定义倡议显示） ===== -->
+        <div class="topic-tab-panel" id="topicPanel-childinit" style="display:none">
+          <div class="panel">
+            <div class="topic-post-filter">
+              <span class="filter-label">下级组织</span>
+              <input type="text" id="childInitOrgSearch" placeholder="搜索下级组织名称..." style="width:200px" oninput="renderChildInitList()">
+              <div class="filter-sep"></div>
+              <span class="filter-label">状态</span>
+              <select id="childInitStatusFilter" onchange="renderChildInitList()">
+                <option value="">全部</option>
+                <option value="showing">展示中</option>
+                <option value="hidden">已隐藏</option>
+              </select>
             </div>
-            <div class="filter-sep"></div>
-            <span class="filter-label">发布时间</span>
-            <input type="date" id="topicDateFrom" value="2026-06-01">
-            <span style="color:var(--text-hint)">至</span>
-            <input type="date" id="topicDateTo" value="2026-06-30">
-            <div class="filter-sep"></div>
-            <span class="filter-label">帖子内容</span>
-            <input type="text" id="topicContentSearch" placeholder="搜索帖子内容..." style="width:160px">
-          </div>
-          <div class="topic-stats">
-            <div class="stat-item"><div class="num" id="topicOrgCount">25</div><div class="lbl">发起组织数（本级+下级）</div></div>
-            <div class="stat-item"><div class="num" id="topicUserCount">1,234</div><div class="lbl">参与人数</div></div>
-            <div class="stat-item"><div class="num" id="topicPostCount">5,234</div><div class="lbl">发帖数</div></div>
-          </div>
-        </div>
-        <div class="tabs-row">
-          <div class="tabs" id="postTabs" style="margin-bottom:0;flex:1">
-            <div class="tab active" onclick="switchPostTab('showing')">展示中 (4)</div>
-            <div class="tab" onclick="switchPostTab('pending')">待审核 <span class="tab-pending-badge">3</span></div>
-            <div class="tab" onclick="switchPostTab('hidden')">已隐藏 (2)</div>
-          </div>
-        </div>
-        <!-- 批量操作栏（列表视图） -->
-        <div class="batch-action-bar" id="batchActionBar" style="display:none">
-          <span>已选择 <span class="count" id="batchSelectedCount">0</span> 条帖子</span>
-          <button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="batchSetStatus('showing')" id="batchShowBtn">批量展示</button>
-          <button class="btn btn-sm" style="color:#E84C3D;border-color:#E84C3D" onclick="batchSetStatus('hidden')" id="batchHideBtn">批量隐藏</button>
-          <button class="btn btn-sm" onclick="clearBatchSelection()">取消选择</button>
-        </div>
-        <div id="postsContainer"></div>
-        <!-- 底部分页器 -->
-        <div class="post-pagination-bar" id="postPaginationBar" style="display:none">
-          <div class="page-info" id="postPageInfo">共 0 条数据</div>
-          <div class="page-right">
-            <select id="postPageSize" onchange="changePostPageSize()" class="page-size-select">
-              <option value="10">10 条/页</option>
-              <option value="20" selected>20 条/页</option>
-              <option value="50">50 条/页</option>
-            </select>
-            <div class="page-controls" id="postPageControls"></div>
+            <div class="panel-body" style="padding:0;overflow-x:auto">
+              <table class="data-table">
+                <thead><tr>
+                  <th>下级组织</th>
+                  <th style="width:80px">层级</th>
+                  <th>倡议内容</th>
+                  <th style="width:120px">活动地址</th>
+                  <th style="width:90px">发布数</th>
+                  <th style="width:120px">发起时间</th>
+                  <th style="width:80px">状态</th>
+                  <th style="width:120px">操作</th>
+                </tr></thead>
+                <tbody id="childInitTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -827,7 +865,7 @@
 
 <!-- ===== 弹窗：批量导出二维码 ===== -->
 <div class="modal-overlay" id="exportQRModal">
-  <div class="modal">
+  <div class="modal" style="width:580px">
     <div class="modal-header"><h3>批量导出倡议二维码</h3><button class="modal-close" onclick="closeModal('exportQRModal')">✕</button></div>
     <div class="modal-body">
       <div class="form-group">
@@ -852,9 +890,22 @@
         </div>
         <div class="org-selector" id="qrOrgList"></div>
       </div>
-      <div style="background:#FAFAFA;padding:10px;border-radius:var(--radius);font-size:11px;color:var(--text-secondary)">导出内容：倡议主题、组织名称、所属层级、倡议二维码</div>
+      <!-- 二维码样式说明 + 示例 -->
+      <div style="background:#FAFAFA;padding:12px 14px;border-radius:var(--radius);font-size:12px;color:var(--text-secondary);display:flex;gap:14px;align-items:center">
+        <div class="qr-sample">
+          <div class="qr-sample-name">阳光基金会-华东分会</div>
+          <div class="qr-sample-img">
+            <div class="qr-dots"></div>
+            <div class="qr-flower">🌺</div>
+          </div>
+        </div>
+        <div style="flex:1;line-height:1.7">
+          <p style="font-weight:600;color:var(--text);margin-bottom:4px">每个二维码都会自动带上对应的组织名称标识</p>
+          <p>导出内容：倡议主题、组织名称、所属层级、倡议二维码（每张二维码顶部都包含「<strong>所属机构-组织名称</strong>」文字，扫码即定向到该组织专属页面）。</p>
+        </div>
+      </div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="closeModal('exportQRModal');showToast('倡议二维码 Excel 已下载')">导出 Excel</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出 Excel</button></div>
   </div>
 </div>
 
