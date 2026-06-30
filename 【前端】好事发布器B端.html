@@ -42,6 +42,11 @@
     <div class="content">
       <!-- ============ 体系管理 ============ -->
       <div class="page active" id="page-org">
+        <div class="init-action-bar">
+          <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
+          <button class="btn" onclick="openImportOrgModal()">批量导入</button>
+          <button class="btn" onclick="openExportOrgModal()">批量导出</button>
+        </div>
         <div class="filter-bar">
           <span class="filter-label">组织层级</span>
           <div class="org-cascader" id="orgCascader">
@@ -65,12 +70,6 @@
               <label class="level-filter-opt"><input type="checkbox" value="4" onchange="applyLevelFilter()"> 四级组织</label>
               <label class="level-filter-opt"><input type="checkbox" value="5" onchange="applyLevelFilter()"> 五级组织</label>
             </div>
-          </div>
-          <div class="filter-spacer"></div>
-          <div class="filter-actions">
-            <button class="btn" onclick="openImportOrgModal()">批量导入</button>
-            <button class="btn" onclick="openExportOrgModal()">批量导出</button>
-            <button class="btn btn-primary" onclick="openCreateOrgModal()">＋ 新建组织</button>
           </div>
         </div>
         <div class="panel">
