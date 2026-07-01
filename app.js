@@ -1022,7 +1022,7 @@ function getFilteredInitiatives() {
   const dateFrom = document.getElementById('initDateFrom')?.value || '';
   const dateTo = document.getElementById('initDateTo')?.value || '';
   const search = document.getElementById('initSearch')?.value?.toLowerCase() || '';
-  const orgFilter = document.getElementById('initOrgFilter')?.value || '';
+  const orgFilter = document.getElementById('initCascaderValue')?.value || '';
   const typeFilter = document.getElementById('initTypeFilter')?.value || '';
   return DATA.initiatives.filter(i => {
     if (i.isDraft) return false;
@@ -1031,45 +1031,18 @@ function getFilteredInitiatives() {
     if (search && !i.title.toLowerCase().includes(search) && !(i.desc||'').toLowerCase().includes(search) && !(i.remark||'').toLowerCase().includes(search)) return false;
     if (orgFilter) {
       const initPosts = DATA.posts.filter(p => p.initId === i.id);
-      const initOrgs = new Set(initPosts.map(p => p.org));
-      if (!initOrgs.has(orgFilter)) return false;
+      // 树级联过滤：帖子组织正好是选中的级联组织本身或者是其下级
+      const hasMatchedPost = initPosts.some(p => {
+        if (p.org === orgFilter) return true;
+        const pOrg = DATA.orgs.find(o => o.name === p.org);
+        return pOrg && (pOrg.parents || []).includes(orgFilter);
+      });
+      if (!hasMatchedPost) return false;
     }
     if (typeFilter === 'unified' && i.customByChild) return false;
     if (typeFilter === 'custom' && !i.customByChild) return false;
     return true;
   });
-}
-
-// 好事发布器 - 发起组织搜索筛选
-function showInitOrgDropdown() {
-  renderInitOrgDropdown(document.getElementById('initOrgSearch').value.trim());
-  document.getElementById('initOrgDropdown').style.display = 'block';
-}
-function filterInitOrgDropdown() {
-  renderInitOrgDropdown(document.getElementById('initOrgSearch').value.trim());
-  document.getElementById('initOrgDropdown').style.display = 'block';
-  document.getElementById('initOrgFilter').value = '';
-  renderInitiatives();
-}
-function renderInitOrgDropdown(keyword) {
-  const dropdown = document.getElementById('initOrgDropdown');
-  const filtered = keyword ? DATA.orgs.filter(o => o.name.toLowerCase().includes(keyword.toLowerCase())) : DATA.orgs;
-  if (filtered.length === 0) {
-    dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text-hint);text-align:center;">未找到匹配的组织</div>';
-  } else {
-    dropdown.innerHTML = '<div style="padding:6px 12px;font-size:11px;color:var(--text-hint);cursor:pointer;border-bottom:1px solid #f0f0f0" onclick="selectInitOrg(\'\',\'\')">全部组织</div>' + filtered.map(o =>
-      `<div style="padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background=''" onclick="selectInitOrg('${o.name}','${o.name}')">
-        <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;">${'一二三四五'[o.level-1]}级</span>
-        <span>${o.name}</span>
-      </div>`
-    ).join('');
-  }
-}
-function selectInitOrg(value, display) {
-  document.getElementById('initOrgFilter').value = value;
-  document.getElementById('initOrgSearch').value = display;
-  document.getElementById('initOrgDropdown').style.display = 'none';
-  renderInitiatives();
 }
 
 function renderInitiatives() {
@@ -3264,8 +3237,88 @@ document.addEventListener('click', function(e) {
     if (panel) panel.style.display = 'none';
   }
   const dcCascader = document.getElementById('dcCascader');
+  const dcCascader = document.getElementById('dcCascader');
   if (dcCascader && !dcCascader.contains(e.target)) {
     const panel = document.getElementById('dcCascaderPanel');
     if (panel) panel.style.display = 'none';
   }
+  const initCascader = document.getElementById('initCascader');
+  if (initCascader && !initCascader.contains(e.target)) {
+    const panel = document.getElementById('initCascaderPanel');
+    if (panel) panel.style.display = 'none';
+  }
 });
+
+// ==========================================
+// 倡议管理页分列级联选择器 (initCascader)
+// ==========================================
+let initCascaderSel = [];
+
+function initOrgsForCascaderColumn(colIdx) {
+  const level = colIdx + 1;
+  return DATA.orgs.filter(o => {
+    if (o.level !== level) return false;
+    if ((o.parents || []).length !== colIdx) return false;
+    if (colIdx > 0) {
+      return (o.parents || [])[colIdx - 1] === initCascaderSel[colIdx - 1];
+    }
+    return true;
+  });
+}
+
+function toggleInitCascader(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('initCascaderPanel');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'flex';
+  if (!open) {
+    if (!document.getElementById('initCascaderValue').value) initCascaderSel = [];
+    renderInitCascaderColumns();
+  }
+}
+
+function renderInitCascaderColumns() {
+  const panel = document.getElementById('initCascaderPanel');
+  if (!panel) return;
+  let cols = '';
+  for (let i = 0; i < 5; i++) {
+    if (i > 0 && !initCascaderSel[i - 1]) break;
+    const items = initOrgsForCascaderColumn(i);
+    if (items.length === 0) break;
+    cols += `<div class="org-cascader-col">` + items.map(o => {
+      const active = initCascaderSel[i] === o.name;
+      const hasChild = DATA.orgs.some(x => x.level === o.level + 1 && (x.parents || [])[i] === o.name && x.parents.length === i + 1);
+      return `<div class="org-cascader-item ${active ? 'active' : ''}" onmouseenter="hoverInitCascader(${i},'${o.name}')" onclick="selectInitCascader(${i},'${o.name}')">
+        <span>${o.name}</span>${hasChild ? '<span class="arrow">›</span>' : ''}
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  panel.innerHTML = cols;
+}
+
+function hoverInitCascader(colIdx, name) {
+  if (initCascaderSel[colIdx] === name && initCascaderSel.length === colIdx + 1) return;
+  initCascaderSel = initCascaderSel.slice(0, colIdx);
+  initCascaderSel[colIdx] = name;
+  renderInitCascaderColumns();
+}
+
+function selectInitCascader(colIdx, name) {
+  initCascaderSel = initCascaderSel.slice(0, colIdx);
+  initCascaderSel[colIdx] = name;
+  document.getElementById('initCascaderValue').value = name;
+  document.getElementById('initCascaderInput').value = initCascaderSel.join(' / ');
+  document.getElementById('initCascaderClear').style.display = 'block';
+  document.getElementById('initCascaderPanel').style.display = 'none';
+  renderInitiatives();
+}
+
+function clearInitCascader(e) {
+  if (e) e.stopPropagation();
+  initCascaderSel = [];
+  document.getElementById('initCascaderValue').value = '';
+  document.getElementById('initCascaderInput').value = '';
+  document.getElementById('initCascaderClear').style.display = 'none';
+  document.getElementById('initCascaderPanel').style.display = 'none';
+  renderInitiatives();
+}

@@ -108,11 +108,12 @@
             <span class="filter-label">内容：</span>
             <input type="text" id="initSearch" placeholder="搜索倡议内容..." style="width:160px" oninput="renderInitiatives()">
             <div class="filter-sep"></div>
-            <span class="filter-label">发起组织：</span>
-            <div style="position:relative;display:inline-block">
-              <input type="text" id="initOrgSearch" placeholder="搜索发起组织..." style="width:160px" oninput="filterInitOrgDropdown()" onfocus="showInitOrgDropdown()" autocomplete="off">
-              <input type="hidden" id="initOrgFilter" value="">
-              <div id="initOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+            <span class="filter-label">发起组织</span>
+            <div class="org-cascader" id="initCascader">
+              <input type="text" id="initCascaderInput" readonly placeholder="全部组织（最多5级）" onclick="toggleInitCascader(event)" style="font-size:12px;height:30px;width:180px;padding:5px 22px 5px 10px">
+              <span class="org-cascader-clear" id="initCascaderClear" onclick="clearInitCascader(event)" style="display:none">✕</span>
+              <input type="hidden" id="initCascaderValue" value="">
+              <div class="org-cascader-panel" id="initCascaderPanel" style="display:none"></div>
             </div>
             <div class="filter-sep"></div>
             <span class="filter-label">倡议类型：</span>
@@ -129,7 +130,7 @@
               <table class="data-table init-list-table">
                 <thead>
                   <tr>
-                    <th>倡议内容</th>
+                    <th style="width:380px">倡议内容</th>
                     <th style="width:110px">倡议类型</th>
                     <th style="width:110px" onclick="sortInitList('orgCount')" class="sortable">参与组织数 <span class="sort-arrow" data-key="orgCount">⇅</span></th>
                     <th style="width:110px" onclick="sortInitList('postCount')" class="sortable">帖子发布数 <span class="sort-arrow" data-key="postCount">⇅</span></th>
@@ -841,18 +842,13 @@
 
       <div class="form-group">
         <label>选择发起组织</label>
-        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-          <select id="qrOrgLayerFilter" onchange="filterQROrgByLayer()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
-            <option value="">全部层级</option>
-            <option value="1">一级组织</option>
-            <option value="2">二级组织</option>
-            <option value="3">三级组织</option>
-            <option value="4">四级组织</option>
-            <option value="5">五级组织</option>
-          </select>
-          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="qrSelectAllCb" onchange="toggleAllQROrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+        <div class="org-tree-picker" id="exportQRPicker">
+          <div class="otp-search">
+            <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
+            <span class="otp-search-icon">▾</span>
+          </div>
+          <div class="otp-panel" onclick="event.stopPropagation()"></div>
         </div>
-        <div class="org-selector" id="qrOrgList"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出</button></div>
@@ -1045,7 +1041,15 @@ function renderQRModal() {
   if (inp) inp.value = '';
   const dropdown = document.getElementById('qrInitPickDropdown');
   if (dropdown) dropdown.style.display = 'none';
-  renderQROrgList();
+  
+  // 初始化导出邀请码弹窗里的多选层级选择器
+  const picker = document.getElementById('exportQRPicker');
+  if (picker) {
+    delete picker.dataset.initialized;
+    otpRender(picker);
+    picker.dataset.initialized = '1';
+    otpCheckAll('exportQRPicker'); // 默认全选
+  }
 }
 
 // 倡议选择：点击输入框时弹出可勾选下拉，勾选项用分号回填到输入框
@@ -1087,40 +1091,6 @@ document.addEventListener('click', e => {
   if (!dd || !wrap) return;
   if (!wrap.contains(e.target)) dd.style.display = 'none';
 });
-
-function renderQROrgList() {
-  const orgList = document.getElementById('qrOrgList');
-  if (!orgList) return;
-  const sortedOrgs = [...DATA.orgs].sort((a,b) => {
-    if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
-    if (a.level !== b.level) return a.level - b.level;
-    return a.name.localeCompare(b.name);
-  });
-  orgList.innerHTML = sortedOrgs.map(o => `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}"><input type="checkbox" checked onchange="updateQRSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`).join('');
-}
-function filterQROrgByLayer() {
-  const val = document.getElementById('qrOrgLayerFilter').value;
-  const labels = document.querySelectorAll('#qrOrgList label');
-  // 统一逻辑：与发起倡议层级筛选一致——按层级显示/隐藏，不修改已勾选状态
-  labels.forEach(label => {
-    label.style.display = (!val || label.dataset.level === val) ? 'flex' : 'none';
-  });
-  updateQRSelectAllCb();
-}
-function toggleAllQROrgs(checked) {
-  document.querySelectorAll('#qrOrgList label').forEach(label => {
-    if (label.style.display !== 'none') {
-      label.querySelector('input[type="checkbox"]').checked = checked;
-    }
-  });
-}
-function updateQRSelectAllCb() {
-  const allLabels = document.querySelectorAll('#qrOrgList label');
-  const visibleCbs = [...allLabels].filter(l => l.style.display !== 'none').map(l => l.querySelector('input[type="checkbox"]'));
-  const allChecked = visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked);
-  const selectAllCb = document.getElementById('qrSelectAllCb');
-  if (selectAllCb) selectAllCb.checked = allChecked;
-}
 
 // ===== 批量地点 Excel 上传 =====
 function toggleBatchLocationPanel() {
