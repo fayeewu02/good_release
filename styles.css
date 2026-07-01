@@ -344,7 +344,8 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .org-selector input[type="checkbox"]{accent-color:var(--primary);width:14px;height:14px;flex-shrink:0;margin:0}
 
 /* ============ 层级选择组件（搜索+下拉+懒加载） ============ */
-.org-tree-picker{position:relative}
+.org-tree-picker{position:relative;transition:margin-bottom .15s ease}
+.org-tree-picker.open{margin-bottom:270px}
 .org-tree-picker .otp-search{position:relative}
 .org-tree-picker .otp-search-input{width:100%;padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;background:#fff;box-sizing:border-box}
 .org-tree-picker .otp-search-input:focus{outline:none;border-color:var(--primary)}
