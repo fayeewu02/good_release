@@ -24,9 +24,7 @@ const DATA = {
     {id:3,title:'绿色出行周',desc:'本周选择步行、骑行或公共交通出行，减少碳排放。分享你的绿色出行方式！',color:'linear-gradient(135deg,#4A90D9,#60A5FA)',orgCount:20,postCount:2103,createDate:'2026-06-15',isDraft:false,customByChild:false,location:'',remark:''},
     {id:4,title:'节水行动周',desc:'记录每天的节水小妙招，倡导绿色生活方式，从身边做起。',color:'linear-gradient(135deg,#1ABC9C,#16A085)',orgCount:15,postCount:1563,createDate:'2026-06-18',isDraft:false,customByChild:false,location:'',remark:''},
     {id:5,title:'邻里互助日',desc:'帮助邻居解决生活中的小困难，分享温暖瞬间。',color:'linear-gradient(135deg,#E74C3C,#C0392B)',orgCount:22,postCount:2892,createDate:'2026-06-12',isDraft:false,customByChild:false,location:'',remark:''},
-    {id:8,title:'0628自定义倡议',desc:'',color:'linear-gradient(135deg,#FAAD14,#FFC53D)',orgCount:6,postCount:325,createDate:'2026-06-28',isDraft:false,customByChild:true,location:'',remark:'0628自定义倡议'},
-    {id:6,title:'旧衣回收计划',desc:'将闲置的旧衣服整理出来，捐给需要的人。',color:'linear-gradient(135deg,#9B59B6,#8E44AD)',orgCount:0,postCount:0,createDate:'2026-06-20',isDraft:true},
-    {id:7,title:'社区读书会',desc:'每周组织一次社区读书分享活动。',color:'linear-gradient(135deg,#E67E22,#F39C12)',orgCount:0,postCount:0,createDate:'2026-06-22',isDraft:true}
+    {id:8,title:'0628自定义倡议',desc:'',color:'linear-gradient(135deg,#FAAD14,#FFC53D)',orgCount:6,postCount:325,createDate:'2026-06-28',isDraft:false,customByChild:true,location:'',remark:'0628自定义倡议'}
   ],
   nextInitId: 9,
   // 邀请下级发起记录（无统一主题，主题由下级自行填写）
@@ -798,20 +796,20 @@ function otpRender(picker) {
       </span>
     </div>`;
   const summaryHtml = `<div class="otp-summary">已选 <strong>${checkedCount}</strong> 个组织</div>`;
-  // 4. 渲染树
+  // 4. 渲染树（默认只展开一级：搜索时父链强制展开；非搜索时全部折叠，由 ▸ 控制）
   if (roots.length === 0) {
     panel.innerHTML = toolsHtml + `<div class="otp-empty">未找到匹配的组织</div>` + summaryHtml;
     return;
   }
-  panel.innerHTML = toolsHtml + roots.map(o => otpRenderNode(o, isVisible, 0)).join('') + summaryHtml;
+  panel.innerHTML = toolsHtml + roots.map(o => otpRenderNode(o, isVisible, 0, keyword)).join('') + summaryHtml;
 }
 
-function otpRenderNode(org, isVisible, depth) {
+function otpRenderNode(org, isVisible, depth, keyword) {
   const kids = DATA.orgs.filter(o => o.level === org.level + 1 && (o.parents || []).length === org.level && (o.parents || [])[org.level - 1] === org.name);
   const hasKids = kids.length > 0;
-  // 搜索时若没有命中该项本身（只为了展示父链）且该项不是祖先链上的一环，则略过 —— 实际 isVisible 已通过祖先链补齐
-  const isExpanded = isVisible; // 搜索时父链节点强制展开
-  const childrenHtml = (hasKids && isExpanded) ? `<div class="otp-children">${kids.filter(k => isVisible(k)).map(k => otpRenderNode(k, isVisible, depth + 1)).join('')}</div>` : '';
+  // 搜索时：祖先链节点强制展开，便于看到命中项；非搜索时：全部折叠，需手动点击 ▸
+  const isExpanded = !!keyword && isVisible(org);
+  const childrenHtml = (hasKids && isExpanded) ? `<div class="otp-children">${kids.filter(k => isVisible(k)).map(k => otpRenderNode(k, isVisible, depth + 1, keyword)).join('')}</div>` : '';
   return `
     <div class="otp-node" data-org-id="${org.id}">
       <span class="otp-toggle ${hasKids ? 'has-children' : 'empty'} ${isExpanded && hasKids ? 'expanded' : ''}" onclick="otpToggle(this,event)">${hasKids ? '▸' : ''}</span>
@@ -1055,7 +1053,7 @@ function renderInitiatives() {
     return (va > vb ? 1 : -1) * (asc ? 1 : -1);
   });
   if (sorted.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-hint)">没有找到匹配的倡议</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-hint)">没有找到匹配的倡议</td></tr>`;
   } else {
     tbody.innerHTML = sorted.map(i => {
       const isCustom = !!i.customByChild;
@@ -1063,7 +1061,6 @@ function renderInitiatives() {
         ? '<span class="init-type-tag init-type-custom">自定义倡议</span>'
         : '<span class="init-type-tag init-type-unified">统一倡议</span>';
       const titleText = isCustom ? (i.remark || i.title || '自定义倡议') : i.title;
-      const locationText = isCustom ? '—' : (i.location || '不限');
       // 参与人数：根据帖子去重统计，若无则按发帖数 * 0.6 估算
       const usersSet = new Set(DATA.posts.filter(p => p.initId === i.id).map(p => p.user));
       const memberCount = usersSet.size > 0 ? usersSet.size : Math.max(0, Math.round((i.postCount || 0) * 0.6));
@@ -1075,7 +1072,6 @@ function renderInitiatives() {
           ${isCustom && i.remark ? '<div style="font-size:11px;color:var(--text-hint);margin-top:2px">备注 · 由下级自填</div>' : ''}
         </td>
         <td>${typeTag}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${locationText}</td>
         <td>${i.orgCount}</td>
         <td>${i.postCount.toLocaleString()}</td>
         <td>${memberCount.toLocaleString()}</td>
@@ -1330,96 +1326,7 @@ function exportLastInviteQR() {
 }
 
 function renderDrafts() {
-  const drafts = DATA.initiatives.filter(i => i.isDraft);
-  const bar = document.getElementById('draftBar');
-  const panel = document.getElementById('draftPanel');
-  if (!bar) return;
-  bar.textContent = `草稿箱 (${drafts.length})`;
-  if (drafts.length === 0) {
-    bar.style.display = 'none';
-    panel.classList.remove('show');
-    // 草稿为空时也要恢复列表显示
-    const listPanel = document.querySelector('#initPanel-unified > .panel');
-    if (listPanel) listPanel.style.display = '';
-    return;
-  }
-  bar.style.display = 'inline-flex';
-  bar.className = 'btn';
-  // 草稿列表视图（与倡议管理一致的表格样式）+ 顶部返回按钮
-  panel.querySelector('.draft-list').innerHTML = `
-    <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">
-      <a class="btn-link" onclick="toggleDrafts()" style="font-size:13px">← 返回倡议管理</a>
-    </div>
-    <div class="panel">
-      <div class="panel-header"><h3>草稿箱 (${drafts.length})</h3></div>
-      <div class="panel-body" style="padding:0;overflow-x:auto">
-        <table class="data-table init-list-table">
-          <thead>
-            <tr>
-              <th>倡议内容</th>
-              <th style="width:160px">活动地址</th>
-              <th style="width:140px">创建时间</th>
-              <th style="width:140px">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${drafts.map(d => `
-              <tr>
-                <td><div class="init-title">${d.title || '（未填写倡议内容）'}</div></td>
-                <td style="font-size:14px;color:var(--text-secondary)">${d.location || '—'}</td>
-                <td style="font-size:14px;color:var(--text-secondary)">${d.createDate}</td>
-                <td class="actions-cell">
-                  <a class="btn-link" onclick="editDraft(${d.id})">编辑</a>
-                  <a class="btn-link btn-danger" onclick="deleteDraft(${d.id})">删除</a>
-                </td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-function toggleDrafts() {
-  const panel = document.getElementById('draftPanel');
-  const listPanel = document.querySelector('#initPanel-unified > .panel');
-  if (panel.classList.contains('show')) {
-    panel.classList.remove('show');
-    if (listPanel) listPanel.style.display = '';
-  } else {
-    panel.classList.add('show');
-    if (listPanel) listPanel.style.display = 'none';
-  }
-}
-
-function editDraft(id) {
-  const d = DATA.initiatives.find(i => i.id === id);
-  if (!d) return;
-  document.getElementById('createInitTitle').value = d.title || '';
-  document.getElementById('createInitLocation').value = d.location || '';
-  document.getElementById('createInitEditId').value = d.id;
-  document.getElementById('createInitModalTitle').textContent = '编辑草稿';
-  // 编辑草稿默认开启「批量发起」，复用与「发起倡议」一致的层级选择组件
-  document.getElementById('batchSwitch').checked = true;
-  document.getElementById('batchOrgSection').style.display = 'block';
-  document.getElementById('customByChildSection').style.display = 'flex';
-  document.getElementById('customByChildSwitch').checked = false;
-  document.getElementById('customByChildBlock').style.display = 'none';
-  document.getElementById('unifiedContentBlock').style.display = 'block';
-  // 初始化批量/自定义两个 picker（默认全选）
-  ['batchOrgPicker','customOrgPicker'].forEach(id => {
-    const p = document.getElementById(id);
-    if (p) { delete p.dataset.initialized; otpRender(p); p.dataset.initialized = '1'; otpCheckAll(id); }
-  });
-  openModal('createInitModal');
-}
-
-function deleteDraft(id) {
-  const idx = DATA.initiatives.findIndex(i => i.id === id);
-  if (idx > -1) {
-    DATA.initiatives.splice(idx, 1);
-    renderInitiatives();
-    showToast('草稿已删除');
-  }
+  // 草稿箱已下线
 }
 
 function openCreateInitModal() {
@@ -1549,22 +1456,7 @@ function submitCreateInit() {
 }
 
 function saveDraftInit() {
-  const title = document.getElementById('createInitTitle').value.trim() || '未命名倡议';
-  const location = document.getElementById('createInitLocation')?.value?.trim() || '';
-  const editId = document.getElementById('createInitEditId').value;
-  if (editId) {
-    const existing = DATA.initiatives.find(i => i.id === parseInt(editId));
-    if (existing) { existing.title = title; existing.location = location; }
-  } else {
-    DATA.initiatives.push({
-      id: DATA.nextInitId++, title, desc: '', location,
-      color:'linear-gradient(135deg,#95A5A6,#7F8C8D)', orgCount:0, postCount:0,
-      createDate: new Date().toISOString().slice(0,10), isDraft: true
-    });
-  }
-  closeModal('createInitModal');
-  renderInitiatives();
-  showToast('已保存到草稿箱');
+  // 草稿箱已下线，此函数保留为空桩
 }
 
 // ========================
