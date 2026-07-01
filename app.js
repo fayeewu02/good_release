@@ -348,7 +348,6 @@ function renderOrgTable() {
       <td>${o.leader}</td><td>${o.phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</td>
       <td class="actions-cell">
         <a class="btn-link" onclick="openEditOrgModal('${o.id}')">编辑</a>
-        <a class="btn-link" onclick="switchToMember('${o.id}','${o.name}')">成员管理</a>
         <a class="btn-link btn-danger" onclick="confirmDeleteOrg('${o.id}')">删除</a>
       </td>
     </tr>`).join('');
@@ -633,9 +632,9 @@ function downloadCSV(filename, rows) {
 // ===== 批量创建组织：下载含示例的模板 =====
 function downloadOrgTemplate() {
   const rows = [
-    ['一级组织','二级组织','三级组织','四级组织','五级组织','负责人姓名','负责人手机号','工作人员2姓名','工作人员2手机号'],
-    ['阳光基金会','华东分会','社区A队','浦东街道服务站','世纪村志愿组','周晓','13600004444','李雷','13700008888'],
-    ['阳光基金会','华东分会','社区B队','','','赵六','13600003456','','']
+    ['一级组织','二级组织','三级组织','四级组织','五级组织','负责人','负责人电话'],
+    ['阳光基金会','华东分会','社区A队','浦东街道服务站','世纪村志愿组','周晓','13600004444'],
+    ['阳光基金会','华东分会','社区B队','','','赵六','13600003456']
   ];
   downloadCSV('批量创建组织模板（含示例）.csv', rows);
   showToast('模板已下载，含示例行可直接参考');
@@ -665,7 +664,7 @@ function handleImportOrgFile(input) {
 }
 
 function parseImportContent(text) {
-  // 解析 CSV（兼容模板表头），识别需新增组织与工作人员数量
+  // 解析 CSV（兼容模板表头），识别需新增组织与负责人电话
   const lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length <= 1) { showToast('文件内容为空'); return; }
   const split = l => {
@@ -679,33 +678,34 @@ function parseImportContent(text) {
     out.push(cur); return out.map(s => s.trim());
   };
   const existingNames = new Set(DATA.orgs.map(o => o.name));
-  const newOrgsMap = new Map(); // name -> {name, level, parents, staff}
-  let staffTotal = 0;
+  const newOrgsMap = new Map(); // name -> {name, level, parents, leader, phone}
   for (let r = 1; r < lines.length; r++) {
     const cells = split(lines[r]);
     const chain = [cells[0], cells[1], cells[2], cells[3], cells[4]].map(s => (s || '').trim());
-    // 收集本行工作人员（从第6列起，成对：姓名/手机号），第一位即负责人
-    let rowStaff = 0;
-    for (let c = 5; c < cells.length; c += 2) { if ((cells[c] || '').trim()) rowStaff++; }
+    const leader = (cells[5] || '').trim();
+    const phone  = (cells[6] || '').trim();
     let parents = [];
     chain.forEach((nm, idx) => {
       if (!nm) return;
       const level = idx + 1;
       if (!existingNames.has(nm) && !newOrgsMap.has(nm)) {
-        newOrgsMap.set(nm, { name: nm, level, parents: [...parents], staff: 0 });
+        newOrgsMap.set(nm, { name: nm, level, parents: [...parents], leader: '', phone: '' });
       }
       parents.push(nm);
     });
-    // 工作人员归属到最末级组织
+    // 负责人信息归属到最末级组织
     const lastName = [...chain].reverse().find(n => n);
-    if (lastName && newOrgsMap.has(lastName)) { newOrgsMap.get(lastName).staff += rowStaff; }
-    staffTotal += rowStaff;
+    if (lastName && newOrgsMap.has(lastName)) {
+      const target = newOrgsMap.get(lastName);
+      if (leader) target.leader = leader;
+      if (phone)  target.phone  = phone;
+    }
   }
   importParseResult = Array.from(newOrgsMap.values());
-  renderImportPreview(staffTotal);
+  renderImportPreview();
 }
 
-function renderImportPreview(staffTotal) {
+function renderImportPreview() {
   const preview = document.getElementById('importPreview');
   const body = document.getElementById('importPreviewBody');
   const summary = document.getElementById('importPreviewSummary');
@@ -717,12 +717,12 @@ function renderImportPreview(staffTotal) {
     btn.disabled = true;
     return;
   }
-  summary.innerHTML = `识别完成：本次将新增 <strong>${importParseResult.length}</strong> 个组织，新增工作人员 <strong>${staffTotal}</strong> 名。请确认后导入。`;
+  summary.innerHTML = `识别完成：本次将新增 <strong>${importParseResult.length}</strong> 个组织。请确认后导入。`;
   body.innerHTML = importParseResult.map(o => `
     <tr>
       <td>${o.name}</td>
       <td><span class="layer-tag layer-${o.level}">${'一二三四五'[o.level-1]}级</span></td>
-      <td>${o.staff} 名</td>
+      <td>${o.leader ? o.leader + (o.phone ? ' / ' + o.phone : '') : '<span style="color:var(--text-hint)">待完善</span>'}</td>
     </tr>`).join('');
   preview.style.display = 'block';
   btn.disabled = false;
@@ -754,59 +754,222 @@ function confirmImportOrgs() {
   showToast(`成功导入 ${count} 个组织`);
 }
 
+// ===========================================
+// 通用：组织层级选择器（搜索 + 下拉 + 懒加载 + 父级联动子级）
+// ===========================================
+/**
+ * 初始化一个 .org-tree-picker 容器
+ * 行为：
+ *   - 点击/聚焦输入框 → 展开下拉
+ *   - 下拉默认只展示一级组织；点击行首▸展开二级
+ *   - 勾选父级 → 自动勾选全部子级
+ *   - 文本框输入关键词 → 模糊匹配组织名，仅展示命中项及其祖先链
+ *   - 顶部小工具：清空 / 展开全部
+ *   - 底部 summary：实时显示已选数量
+ */
+function otpRender(picker) {
+  const panel = picker.querySelector('.otp-panel');
+  const input = picker.querySelector('.otp-search-input');
+  const keyword = (input.value || '').trim().toLowerCase();
+  // 1. 找到命中的组织 ID 集合 + 补齐所有祖先
+  let visibleIds = new Set();
+  if (keyword) {
+    DATA.orgs.forEach(o => {
+      if (o.name.toLowerCase().includes(keyword)) {
+        visibleIds.add(o.id);
+        (o.parents || []).forEach(p => {
+          const pOrg = DATA.orgs.find(x => x.name === p);
+          if (pOrg) visibleIds.add(pOrg.id);
+        });
+      }
+    });
+  }
+  const isVisible = (org) => !keyword || visibleIds.has(org.id);
+  // 2. 拿到一级组织（无搜索时全部展示，搜索时按命中）
+  const roots = DATA.orgs.filter(o => o.level === 1 && isVisible(o));
+  // 3. 工具栏 + summary
+  const checkedCount = picker.querySelectorAll('.otp-checkbox:checked').length;
+  const toolsHtml = `
+    <div class="otp-tools">
+      <span>共 ${DATA.orgs.length} 个组织</span>
+      <span>
+        <a onclick="otpExpandAll(this)">展开全部</a>
+        <a onclick="otpClearAll(this)">清空</a>
+      </span>
+    </div>`;
+  const summaryHtml = `<div class="otp-summary">已选 <strong>${checkedCount}</strong> 个组织</div>`;
+  // 4. 渲染树
+  if (roots.length === 0) {
+    panel.innerHTML = toolsHtml + `<div class="otp-empty">未找到匹配的组织</div>` + summaryHtml;
+    return;
+  }
+  panel.innerHTML = toolsHtml + roots.map(o => otpRenderNode(o, isVisible, 0)).join('') + summaryHtml;
+}
+
+function otpRenderNode(org, isVisible, depth) {
+  const kids = DATA.orgs.filter(o => o.level === org.level + 1 && (o.parents || []).length === org.level && (o.parents || [])[org.level - 1] === org.name);
+  const hasKids = kids.length > 0;
+  // 搜索时若没有命中该项本身（只为了展示父链）且该项不是祖先链上的一环，则略过 —— 实际 isVisible 已通过祖先链补齐
+  const isExpanded = isVisible; // 搜索时父链节点强制展开
+  const childrenHtml = (hasKids && isExpanded) ? `<div class="otp-children">${kids.filter(k => isVisible(k)).map(k => otpRenderNode(k, isVisible, depth + 1)).join('')}</div>` : '';
+  return `
+    <div class="otp-node" data-org-id="${org.id}">
+      <span class="otp-toggle ${hasKids ? 'has-children' : 'empty'} ${isExpanded && hasKids ? 'expanded' : ''}" onclick="otpToggle(this,event)">${hasKids ? '▸' : ''}</span>
+      <input type="checkbox" class="otp-checkbox" data-org-id="${org.id}" onchange="otpCheck(this)">
+      <span class="layer-tag layer-${org.level}" style="font-size:10px;padding:0 4px;flex-shrink:0">${'一二三四五'[org.level-1]}级</span>
+      <span>${org.name}</span>
+    </div>${childrenHtml}`;
+}
+
+function otpToggle(toggleEl, ev) {
+  ev.stopPropagation();
+  if (toggleEl.classList.contains('empty')) return;
+  const node = toggleEl.closest('.otp-node');
+  const orgId = parseInt(node.dataset.orgId);
+  const org = DATA.orgs.find(o => o.id === orgId);
+  if (!org) return;
+  const kids = DATA.orgs.filter(o => o.level === org.level + 1 && (o.parents || []).length === org.level && (o.parents || [])[org.level - 1] === org.name);
+  if (kids.length === 0) return;
+  const childrenContainer = node.nextElementSibling;
+  if (childrenContainer && childrenContainer.classList.contains('otp-children')) {
+    childrenContainer.remove();
+    toggleEl.classList.remove('expanded');
+  } else {
+    const isVisible = () => true;
+    const wrap = document.createElement('div');
+    wrap.className = 'otp-children';
+    wrap.innerHTML = kids.map(k => otpRenderNode(k, isVisible, 0)).join('');
+    node.after(wrap);
+    toggleEl.classList.add('expanded');
+  }
+}
+
+function otpCheck(cb) {
+  const orgId = parseInt(cb.dataset.orgId);
+  const org = DATA.orgs.find(o => o.id === orgId);
+  if (!org) return;
+  const checked = cb.checked;
+  // 父级勾选 → 所有子孙自动勾选
+  const toggleDescendants = (parentOrg, flag) => {
+    const kids = DATA.orgs.filter(o => o.level === parentOrg.level + 1 && (o.parents || []).length === parentOrg.level && (o.parents || [])[parentOrg.level - 1] === parentOrg.name);
+    kids.forEach(k => {
+      const kidCb = document.querySelector(`.otp-checkbox[data-org-id="${k.id}"]`);
+      if (kidCb) {
+        kidCb.checked = flag;
+        toggleDescendants(k, flag);
+      }
+    });
+  };
+  toggleDescendants(org, checked);
+  // 更新 summary
+  const picker = cb.closest('.org-tree-picker');
+  otpUpdateSummary(picker);
+}
+
+function otpUpdateSummary(picker) {
+  const summary = picker.querySelector('.otp-summary');
+  if (!summary) return;
+  const checkedCount = picker.querySelectorAll('.otp-checkbox:checked').length;
+  summary.innerHTML = `已选 <strong>${checkedCount}</strong> 个组织`;
+}
+
+function otpOpen(picker) {
+  // 关闭其他已展开的 picker
+  document.querySelectorAll('.org-tree-picker.open').forEach(p => { if (p !== picker) p.classList.remove('open'); });
+  picker.classList.add('open');
+  if (!picker.dataset.initialized) {
+    otpRender(picker);
+    picker.dataset.initialized = '1';
+  }
+}
+
+function otpFilter(picker) {
+  otpRender(picker);
+  picker.classList.add('open');
+}
+
+function otpExpandAll(toolsA) {
+  const picker = toolsA.closest('.org-tree-picker');
+  // 展开所有节点
+  DATA.orgs.filter(o => o.level === 1).forEach(root => {
+    let cur = root;
+    while (true) {
+      const node = picker.querySelector(`.otp-node[data-org-id="${cur.id}"]`);
+      if (!node) break;
+      const toggle = node.querySelector('.otp-toggle');
+      if (toggle && toggle.classList.contains('has-children') && !toggle.classList.contains('expanded')) {
+        const kids = DATA.orgs.filter(o => o.level === cur.level + 1 && (o.parents || []).length === cur.level && (o.parents || [])[cur.level - 1] === cur.name);
+        if (kids.length === 0) break;
+        const wrap = document.createElement('div');
+        wrap.className = 'otp-children';
+        wrap.innerHTML = kids.map(k => otpRenderNode(k, () => true, 0)).join('');
+        node.after(wrap);
+        toggle.classList.add('expanded');
+        cur = kids[0];
+      } else { break; }
+    }
+  });
+}
+
+function otpClearAll(toolsA) {
+  const picker = toolsA.closest('.org-tree-picker');
+  picker.querySelectorAll('.otp-checkbox').forEach(cb => cb.checked = false);
+  otpUpdateSummary(picker);
+}
+
+// 取已勾选组织 ID 列表
+function otpGetCheckedIds(pickerId) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return [];
+  return [...picker.querySelectorAll('.otp-checkbox:checked')].map(cb => parseInt(cb.dataset.orgId));
+}
+
+// 取已勾选组织对象
+function otpGetCheckedOrgs(pickerId) {
+  return otpGetCheckedIds(pickerId).map(id => DATA.orgs.find(o => o.id === id)).filter(Boolean);
+}
+
+// 重置：全部勾选（用于弹窗打开时默认全选）
+function otpCheckAll(pickerId) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  // 渲染一次以确保所有 checkbox 存在
+  if (!picker.dataset.initialized) otpRender(picker);
+  picker.querySelectorAll('.otp-checkbox').forEach(cb => cb.checked = true);
+  otpUpdateSummary(picker);
+  picker.dataset.initialized = '1';
+}
+
+// 全不选
+function otpCheckNone(pickerId) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  picker.querySelectorAll('.otp-checkbox').forEach(cb => cb.checked = false);
+  otpUpdateSummary(picker);
+}
+
+// 全局：点击其他地方关闭所有 picker
+document.addEventListener('click', e => {
+  document.querySelectorAll('.org-tree-picker.open').forEach(p => {
+    if (!p.contains(e.target)) p.classList.remove('open');
+  });
+});
+
 // ===== 批量导出组织 =====
 function openExportOrgModal() {
-  // 初始化组织列表（默认全选）
-  const list = document.getElementById('exportOrgList');
-  if (list) {
-    const sortedOrgs = [...DATA.orgs].sort((a,b) => {
-      if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
-      if (a.level !== b.level) return a.level - b.level;
-      return a.name.localeCompare(b.name);
-    });
-    list.innerHTML = sortedOrgs.map(o =>
-      `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex"><input type="checkbox" checked onchange="updateExportOrgSelectAllCb()"> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`
-    ).join('');
+  // 初始化新组件 picker：默认全部勾选
+  const picker = document.getElementById('exportOrgPicker');
+  if (picker) {
+    delete picker.dataset.initialized;
+    otpRender(picker);
+    picker.dataset.initialized = '1';
+    otpCheckAll('exportOrgPicker');
   }
-  const sel = document.getElementById('exportOrgLayerFilter');
-  if (sel) sel.value = '';
-  const cb = document.getElementById('exportOrgSelectAllCb');
-  if (cb) cb.checked = true;
   openModal('exportOrgModal');
 }
-function filterExportOrgs() {
-  const level = document.getElementById('exportOrgLayerFilter').value;
-  document.querySelectorAll('#exportOrgList label').forEach(item => {
-    item.style.display = (!level || item.dataset.level === level) ? 'flex' : 'none';
-  });
-  updateExportOrgSelectAllCb();
-}
-function toggleAllExportOrgs(checked) {
-  document.querySelectorAll('#exportOrgList label').forEach(label => {
-    if (label.style.display !== 'none') {
-      label.querySelector('input[type="checkbox"]').checked = checked;
-    }
-  });
-}
-function updateExportOrgSelectAllCb() {
-  const labels = document.querySelectorAll('#exportOrgList label');
-  const visibleCbs = [...labels].filter(l => l.style.display !== 'none').map(l => l.querySelector('input[type="checkbox"]'));
-  const allChecked = visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked);
-  const cb = document.getElementById('exportOrgSelectAllCb');
-  if (cb) cb.checked = allChecked;
-}
 function confirmExportOrgs() {
-  // 通过组织名收集已勾选的组织
-  const checkedNames = new Set();
-  document.querySelectorAll('#exportOrgList label').forEach(label => {
-    const c = label.querySelector('input[type="checkbox"]');
-    if (c && c.checked) {
-      // label 文本含"X级 + 组织名"，通过去除层级标签提取名称
-      const name = label.textContent.replace(/[一二三四五]级/, '').trim();
-      checkedNames.add(name);
-    }
-  });
-  const list = DATA.orgs.filter(o => checkedNames.has(o.name));
+  const checkedIds = new Set(otpGetCheckedIds('exportOrgPicker'));
+  const list = DATA.orgs.filter(o => checkedIds.has(o.id));
   if (list.length === 0) { showToast('请至少勾选一个组织'); return; }
   const rows = [['组织ID','组织名称','层级','上级组织','负责人','手机号']];
   list.forEach(o => {
@@ -819,80 +982,6 @@ function confirmExportOrgs() {
   downloadCSV('组织列表导出.csv', rows);
   closeModal('exportOrgModal');
   showToast(`已导出 ${list.length} 个组织数据`);
-}
-
-// ========================
-// 成员管理
-// ========================
-function switchToMember(orgId, orgName) {
-  DATA.currentMemberOrg = orgId;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-member').classList.add('active');
-  const t = document.getElementById('memberOrgTitle'); if (t) t.textContent = orgName + ' · 成员管理';
-  renderMembers();
-}
-function backToOrg() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-org').classList.add('active');
-  renderOrgTable();
-}
-function renderMembers() {
-  const tbody = document.getElementById('memberTableBody');
-  if (DATA.members.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-hint)">暂无成员，请点击右上角"新增成员"添加</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = DATA.members.map(m => `
-    <tr><td>${m.name}</td><td>${m.role}</td><td>${m.phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</td>
-    <td class="actions-cell">
-      <a class="btn-link" onclick="openEditMemberModal(${m.id})">编辑</a>
-      <a class="btn-link btn-danger" onclick="removeMember(${m.id})">移除</a>
-    </td></tr>`).join('');
-}
-function removeMember(id) {
-  const idx = DATA.members.findIndex(m => m.id === id);
-  if (idx > -1) {
-    const name = DATA.members[idx].name;
-    DATA.members.splice(idx, 1);
-    renderMembers();
-    showToast(`已移除成员「${name}」`);
-  }
-}
-function openAddMemberModal() {
-  document.getElementById('addMemberForm').reset();
-  openModal('addMemberModal');
-}
-function submitAddMember() {
-  const name = document.getElementById('addMemberName').value.trim();
-  const role = document.getElementById('addMemberRole').value.trim();
-  const phone = document.getElementById('addMemberPhone').value.trim();
-  if (!name || !role || !phone) { showToast('请填写所有必填项'); return; }
-  DATA.members.push({ id: DATA.nextMemberId++, name, role, phone });
-  closeModal('addMemberModal');
-  renderMembers();
-  showToast(`成员「${name}」已添加`);
-}
-function openEditMemberModal(id) {
-  const m = DATA.members.find(x => x.id === id);
-  if (!m) return;
-  document.getElementById('editMemberId').value = m.id;
-  document.getElementById('editMemberName').value = m.name;
-  document.getElementById('editMemberRole').value = m.role;
-  document.getElementById('editMemberPhone').value = m.phone;
-  openModal('editMemberModal');
-}
-function submitEditMember() {
-  const id = parseInt(document.getElementById('editMemberId').value);
-  const m = DATA.members.find(x => x.id === id);
-  if (!m) return;
-  const name = document.getElementById('editMemberName').value.trim();
-  const role = document.getElementById('editMemberRole').value.trim();
-  const phone = document.getElementById('editMemberPhone').value.trim();
-  if (!name || !role || !phone) { showToast('请填写所有必填项'); return; }
-  m.name = name; m.role = role; m.phone = phone;
-  closeModal('editMemberModal');
-  renderMembers();
-  showToast(`成员「${name}」信息已更新`);
 }
 
 // ========================
@@ -1316,14 +1405,11 @@ function editDraft(id) {
   document.getElementById('customByChildSwitch').checked = false;
   document.getElementById('customByChildBlock').style.display = 'none';
   document.getElementById('unifiedContentBlock').style.display = 'block';
-  // 渲染层级选择列表（与发起倡议复用同一渲染函数）
-  if (typeof initBatchOrgList === 'function') initBatchOrgList();
-  if (typeof initCustomOrgList === 'function') initCustomOrgList();
-  // 重置筛选器为「全部层级」+ 全选
-  const lf = document.getElementById('batchLayerFilter');
-  if (lf) lf.value = '';
-  const sa = document.getElementById('batchSelectAllCb');
-  if (sa) sa.checked = true;
+  // 初始化批量/自定义两个 picker（默认全选）
+  ['batchOrgPicker','customOrgPicker'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) { delete p.dataset.initialized; otpRender(p); p.dataset.initialized = '1'; otpCheckAll(id); }
+  });
   openModal('createInitModal');
 }
 
@@ -1358,6 +1444,15 @@ function toggleBatchOrg() {
   const on = document.getElementById('batchSwitch').checked;
   document.getElementById('batchOrgSection').style.display = on ? 'block' : 'none';
   document.getElementById('customByChildSection').style.display = on ? 'flex' : 'none';
+  if (on) {
+    // 首次开启时初始化 picker
+    const p = document.getElementById('batchOrgPicker');
+    if (p && !p.dataset.initialized) {
+      otpRender(p);
+      p.dataset.initialized = '1';
+      otpCheckAll('batchOrgPicker');
+    }
+  }
   if (!on) {
     // 关闭批量时，也强制关闭自定义
     document.getElementById('customByChildSwitch').checked = false;
@@ -1371,30 +1466,15 @@ function toggleCustomByChild() {
   const on = document.getElementById('customByChildSwitch').checked;
   document.getElementById('customByChildBlock').style.display = on ? 'block' : 'none';
   document.getElementById('unifiedContentBlock').style.display = on ? 'none' : 'block';
-  if (on) initCustomOrgList();
-}
-function initCustomOrgList() {
-  const list = document.getElementById('customOrgList');
-  if (!list) return;
-  const sortedOrgs = [...DATA.orgs].sort((a,b) => {
-    if (a.parent1 !== b.parent1) return a.parent1.localeCompare(b.parent1);
-    if (a.level !== b.level) return a.level - b.level;
-    return a.name.localeCompare(b.name);
-  });
-  list.innerHTML = sortedOrgs.map(o =>
-    `<label data-level="${o.level}" class="${o.level>1?'indent-'+(o.level-1):''}" style="display:flex"><input type="checkbox" checked> <span class="layer-tag layer-${o.level}" style="font-size:10px;padding:0 4px;margin-right:4px;flex-shrink:0">${'一二三四五'[o.level-1]}级</span>${o.name}</label>`
-  ).join('');
-}
-function filterCustomOrgs() {
-  const level = document.getElementById('customLayerFilter').value;
-  document.querySelectorAll('#customOrgList label').forEach(item => {
-    item.style.display = (!level || item.dataset.level === level) ? 'flex' : 'none';
-  });
-}
-function toggleAllCustomOrgs(checked) {
-  document.querySelectorAll('#customOrgList input[type="checkbox"]').forEach(cb => {
-    if (cb.closest('label').style.display !== 'none') cb.checked = checked;
-  });
+  if (on) {
+    const picker = document.getElementById('customOrgPicker');
+    if (picker) {
+      delete picker.dataset.initialized;
+      otpRender(picker);
+      picker.dataset.initialized = '1';
+      otpCheckAll('customOrgPicker');
+    }
+  }
 }
 
 function handleCoverUpload(input) {
@@ -1419,15 +1499,15 @@ function submitCreateInit() {
   const editId = document.getElementById('createInitEditId').value;
   const colors = ['linear-gradient(135deg,#06B57A,#34D399)','linear-gradient(135deg,#FF8C42,#FBBF24)','linear-gradient(135deg,#4A90D9,#60A5FA)','linear-gradient(135deg,#9B59B6,#8E44AD)','linear-gradient(135deg,#E67E22,#F39C12)','linear-gradient(135deg,#1ABC9C,#16A085)'];
 
-  let checkedOrgs;
+  let checkedOrgsArr;
   if (isCustomByChild) {
-    checkedOrgs = document.querySelectorAll('#customOrgList input[type="checkbox"]:checked');
+    checkedOrgsArr = otpGetCheckedOrgs('customOrgPicker');
   } else if (isBatch) {
-    checkedOrgs = document.querySelectorAll('#batchOrgList input[type="checkbox"]:checked');
+    checkedOrgsArr = otpGetCheckedOrgs('batchOrgPicker');
   } else {
-    checkedOrgs = [];
+    checkedOrgsArr = [];
   }
-  const orgCount = isBatch ? checkedOrgs.length : 1;
+  const orgCount = isBatch ? checkedOrgsArr.length : 1;
   const finalTitle = isCustomByChild ? remark : title;
 
   if (editId) {
@@ -1457,11 +1537,7 @@ function submitCreateInit() {
   }
   closeModal('createInitModal');
   if (isBatch && orgCount > 0) {
-    const orgNames = [];
-    checkedOrgs.forEach(cb => {
-      const label = cb.closest('label');
-      if (label) orgNames.push(label.textContent.trim());
-    });
+    const orgNames = checkedOrgsArr.map(o => o.name);
     lastBatchInit = { title: finalTitle, orgCount, orgNames };
     document.getElementById('successOrgCount').textContent = orgCount;
     document.getElementById('successInitTitle').textContent = finalTitle;

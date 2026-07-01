@@ -59,7 +59,7 @@
           <span class="filter-label">组织名称/负责人：</span>
           <input type="text" id="orgSearch" placeholder="输入组织名称或负责人" style="width:220px" oninput="renderOrgTable()">
           <div class="filter-sep"></div>
-          <span class="filter-label">仅查看</span>
+          <span class="filter-label">查看层级</span>
           <div class="level-filter" id="levelFilter">
             <input type="text" id="levelFilterInput" readonly placeholder="全部层级" onclick="toggleLevelFilter(event)">
             <span class="org-cascader-clear" id="levelFilterClear" onclick="clearLevelFilter(event)" style="display:none">✕</span>
@@ -78,28 +78,6 @@
             <table class="data-table">
               <thead><tr><th>组织ID</th><th>组织名称</th><th>层级</th><th>上级组织</th><th>负责人</th><th>手机号</th><th>操作</th></tr></thead>
               <tbody id="orgTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ============ 成员管理 ============ -->
-      <div class="page" id="page-member">
-        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <a class="btn-link" onclick="backToOrg()" style="font-size:13px">← 返回体系管理</a>
-            <span id="memberOrgTitle" style="font-size:14px;font-weight:600;margin-left:12px">成员管理</span>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn" onclick="openModal('importMemberModal')">批量导入</button>
-            <button class="btn btn-primary" onclick="openAddMemberModal()">＋ 新增成员</button>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-body" style="padding:0">
-            <table class="data-table">
-              <thead><tr><th>姓名</th><th>职务</th><th>联系方式</th><th>操作</th></tr></thead>
-              <tbody id="memberTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -496,7 +474,7 @@
         <p style="font-size:13px;font-weight:600;color:#389E0D;margin-bottom:6px">批量导入组织说明：</p>
         <p style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin:0">
           ·每行填写从一级到末级的完整组织链路，系统自动识别层级并创建/复用。<br>
-          ·组织负责人信息填写在第一位。
+          ·每个组织仅填写一位负责人姓名和联系方式。
         </p>
       </div>
       <div style="text-align:center;padding:16px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
@@ -513,7 +491,7 @@
         <div style="background:#E6F4FF;padding:10px 14px;font-size:12px;color:#1677FF;line-height:1.6" id="importPreviewSummary"></div>
         <div style="max-height:220px;overflow-y:auto">
           <table class="data-table" style="font-size:12px">
-            <thead><tr><th>组织名称</th><th>组织层级</th><th>本次新增工作人员</th></tr></thead>
+            <thead><tr><th>组织名称</th><th>组织层级</th><th>负责人 / 电话</th></tr></thead>
             <tbody id="importPreviewBody"></tbody>
           </table>
         </div>
@@ -531,18 +509,13 @@
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">请选择要导出的组织，导出内容包含：组织ID、组织名称、层级、上级组织、负责人、手机号。</p>
       <div class="form-group">
         <label>选择导出组织</label>
-        <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-          <select id="exportOrgLayerFilter" onchange="filterExportOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px">
-            <option value="">全部层级</option>
-            <option value="1">一级组织</option>
-            <option value="2">二级组织</option>
-            <option value="3">三级组织</option>
-            <option value="4">四级组织</option>
-            <option value="5">五级组织</option>
-          </select>
-          <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="exportOrgSelectAllCb" onchange="toggleAllExportOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+        <div class="org-tree-picker" id="exportOrgPicker">
+          <div class="otp-search">
+            <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
+            <span class="otp-search-icon">▾</span>
+          </div>
+          <div class="otp-panel" onclick="event.stopPropagation()"></div>
         </div>
-        <div class="org-selector" id="exportOrgList"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('exportOrgModal')">取消</button><button class="btn btn-primary" onclick="confirmExportOrgs()">确认导出</button></div>
@@ -578,11 +551,13 @@
         <!-- 批量勾选层级：仅在批量发起开启时展示 -->
         <div id="batchOrgSection" style="display:none">
           <div class="form-group"><label>选择发起组织</label>
-            <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-              <select id="batchLayerFilter" onchange="filterBatchOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
-              <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="batchSelectAllCb" onchange="toggleAllBatchOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+            <div class="org-tree-picker" id="batchOrgPicker">
+              <div class="otp-search">
+                <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
+                <span class="otp-search-icon">▾</span>
+              </div>
+              <div class="otp-panel" onclick="event.stopPropagation()"></div>
             </div>
-            <div class="org-selector" id="batchOrgList"></div>
           </div>
         </div>
       </div>
@@ -594,11 +569,13 @@
           <input type="text" id="createInitRemark" placeholder="请输入备注">
         </div>
         <div class="form-group"><label>选择发起组织</label>
-          <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-            <select id="customLayerFilter" onchange="filterCustomOrgs()" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"><option value="">全部层级</option><option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option></select>
-            <label class="btn btn-sm btn-select-action btn-checkbox-select" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="customSelectAllCb" onchange="toggleAllCustomOrgs(this.checked)" checked style="accent-color:#1890FF;width:13px;height:13px;margin:0;cursor:pointer">全选</label>
+          <div class="org-tree-picker" id="customOrgPicker">
+            <div class="otp-search">
+              <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
+              <span class="otp-search-icon">▾</span>
+            </div>
+            <div class="otp-panel" onclick="event.stopPropagation()"></div>
           </div>
-          <div class="org-selector" id="customOrgList"></div>
         </div>
       </div>
     </div>
@@ -1004,57 +981,6 @@
   </div>
 </div>
 
-<!-- ===== 弹窗：新增成员 ===== -->
-<div class="modal-overlay" id="addMemberModal">
-  <div class="modal" style="width:440px">
-    <div class="modal-header"><h3>新增成员</h3><button class="modal-close" onclick="closeModal('addMemberModal')">✕</button></div>
-    <form id="addMemberForm" onsubmit="event.preventDefault();submitAddMember()">
-    <div class="modal-body">
-      <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="addMemberName" placeholder="请输入成员姓名" required></div>
-      <div class="form-group"><label>职务 <span class="required">*</span></label><input type="text" id="addMemberRole" placeholder="请输入职务" required></div>
-      <div class="form-group"><label>联系方式 <span class="required">*</span></label><input type="tel" id="addMemberPhone" placeholder="请输入手机号" required></div>
-    </div>
-    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('addMemberModal')">取消</button><button type="submit" class="btn btn-primary">确认添加</button></div>
-    </form>
-  </div>
-</div>
-
-<!-- ===== 弹窗：批量导入成员 ===== -->
-<div class="modal-overlay" id="importMemberModal">
-  <div class="modal">
-    <div class="modal-header"><h3>批量导入组织管理人员</h3><button class="modal-close" onclick="closeModal('importMemberModal')">✕</button></div>
-    <div class="modal-body">
-      <div style="text-align:center;padding:20px;background:#FAFAFA;border-radius:var(--radius);border:1px dashed var(--border);margin-bottom:14px">
-        <p style="font-size:13px;margin-bottom:8px">点击下载导入模板</p>
-        <a class="btn-link" onclick="showToast('模板已下载')">下载 Excel 模板</a>
-      </div>
-      <div style="text-align:center;padding:24px;background:#FAFAFA;border-radius:var(--radius);border:2px dashed var(--border);cursor:pointer;position:relative">
-        <p style="font-size:14px;margin-bottom:6px;color:var(--text-hint)">上传文件</p>
-        <p style="font-size:12px;color:var(--text-secondary)" id="importMemberFileName">点击或拖拽文件到此处上传</p>
-        <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="document.getElementById('importMemberFileName').textContent=this.files[0]?.name||'点击或拖拽文件到此处上传'">
-      </div>
-      <div style="margin-top:12px;padding:10px;background:#E6F7FF;border-radius:var(--radius);font-size:11px;color:#1890FF">
-        提示：模板包含姓名、职务、联系方式三个字段，请按模板格式填写后上传。
-      </div>
-    </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal('importMemberModal')">取消</button><button class="btn btn-primary" onclick="closeModal('importMemberModal');showToast('成功导入 8 名成员')">确认导入</button></div>
-  </div>
-</div>
-
-<!-- ===== 弹窗：编辑成员 ===== -->
-<div class="modal-overlay" id="editMemberModal">
-  <div class="modal" style="width:440px">
-    <div class="modal-header"><h3>编辑成员</h3><button class="modal-close" onclick="closeModal('editMemberModal')">✕</button></div>
-    <form id="editMemberForm" onsubmit="event.preventDefault();submitEditMember()">
-    <input type="hidden" id="editMemberId">
-    <div class="modal-body">
-      <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="editMemberName" placeholder="请输入成员姓名" required></div>
-      <div class="form-group"><label>职务 <span class="required">*</span></label><input type="text" id="editMemberRole" placeholder="请输入职务" required></div>
-      <div class="form-group"><label>联系方式 <span class="required">*</span></label><input type="tel" id="editMemberPhone" placeholder="请输入手机号" required></div>
-    </div>
-    <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editMemberModal')">取消</button><button type="submit" class="btn btn-primary">保存修改</button></div>
-    </form>
-  </div>
 </div>
 
 <div class="toast" id="toast"></div>

@@ -343,6 +343,27 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .org-selector .indent-2{padding-left:36px}
 .org-selector input[type="checkbox"]{accent-color:var(--primary);width:14px;height:14px;flex-shrink:0;margin:0}
 
+/* ============ 层级选择组件（搜索+下拉+懒加载） ============ */
+.org-tree-picker{position:relative}
+.org-tree-picker .otp-search{position:relative}
+.org-tree-picker .otp-search-input{width:100%;padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;background:#fff;box-sizing:border-box}
+.org-tree-picker .otp-search-input:focus{outline:none;border-color:var(--primary)}
+.org-tree-picker .otp-search-icon{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text-hint);font-size:12px;pointer-events:none}
+.org-tree-picker .otp-panel{display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 12px rgba(0,0,0,.08);max-height:260px;overflow-y:auto;z-index:20;padding:4px 0}
+.org-tree-picker.open .otp-panel{display:block}
+.org-tree-picker .otp-tools{display:flex;align-items:center;justify-content:space-between;padding:4px 10px;font-size:11px;color:var(--text-hint);border-bottom:1px solid #f0f0f0}
+.org-tree-picker .otp-tools a{color:var(--primary);cursor:pointer;margin-left:10px}
+.org-tree-picker .otp-node{display:flex;align-items:center;gap:4px;padding:3px 8px;font-size:12px;cursor:pointer;border-radius:2px;line-height:1.6;user-select:none}
+.org-tree-picker .otp-node:hover{background:var(--primary-light)}
+.org-tree-picker .otp-toggle{width:14px;flex-shrink:0;text-align:center;color:var(--text-hint);font-size:10px;line-height:1;cursor:pointer;transition:transform .15s}
+.org-tree-picker .otp-toggle.has-children{cursor:pointer}
+.org-tree-picker .otp-toggle.empty{visibility:hidden}
+.org-tree-picker .otp-toggle.expanded{transform:rotate(90deg)}
+.org-tree-picker .otp-checkbox{width:14px;height:14px;flex-shrink:0;margin:0;accent-color:var(--primary);cursor:pointer}
+.org-tree-picker .otp-children{padding-left:18px}
+.org-tree-picker .otp-empty{padding:14px 10px;text-align:center;font-size:12px;color:var(--text-hint)}
+.org-tree-picker .otp-summary{font-size:11px;color:var(--text-hint);padding:4px 10px;border-top:1px solid #f0f0f0;background:#FAFAFA;border-radius:0 0 var(--radius) var(--radius)}
+
 .export-options{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
 .export-card{border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;text-align:center}
 .export-card:hover{border-color:var(--primary);background:var(--primary-light)}
