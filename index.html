@@ -334,14 +334,11 @@
             <input type="date" id="dcDateFrom" value="2026-06-01"><span style="color:var(--text-hint)">至</span><input type="date" id="dcDateTo" value="2026-06-26">
             <div class="filter-sep"></div>
             <span class="filter-label">组织/层级</span>
-            <select id="dcLevelFilter">
-              <option value="">全部组织</option>
-              <option value="1">一级组织</option><option value="2">二级组织</option><option value="3">三级组织</option><option value="4">四级组织</option><option value="5">五级组织</option>
-            </select>
-            <div style="position:relative;display:inline-block">
-              <input type="text" id="dcOrgSearch" placeholder="搜索组织名称..." style="width:140px" oninput="filterDCOrgDropdown()" onfocus="showDCOrgDropdown()" autocomplete="off">
-              <input type="hidden" id="dcOrgFilter" value="">
-              <div id="dcOrgDropdown" style="display:none;position:absolute;top:100%;left:0;width:200px;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;"></div>
+            <div class="org-cascader" id="dcCascader" style="margin-right: 4px;">
+              <input type="text" id="dcCascaderInput" readonly placeholder="全部组织（最多5级）" onclick="toggleDCCascader(event)" style="font-size:12px;height:30px;width:180px;padding:5px 22px 5px 10px">
+              <span class="org-cascader-clear" id="dcCascaderClear" onclick="clearDCCascader(event)" style="display:none">✕</span>
+              <input type="hidden" id="dcCascaderValue" value="">
+              <div class="org-cascader-panel" id="dcCascaderPanel" style="display:none"></div>
             </div>
             <div class="filter-sep"></div>
             <span class="filter-label">倡议筛选</span>
@@ -420,11 +417,13 @@
       </div>
       <div class="form-group" id="parentOrgGroup" style="display:none;">
         <label>归属上级组织 <span class="required">*</span></label>
-        <div style="position:relative;">
-          <input type="text" id="parentOrgSearch" placeholder="搜索上级组织名称..." oninput="filterParentOrgs()" onfocus="showParentDropdown()" autocomplete="off">
-          <input type="hidden" id="newOrgParent" value="">
-          <div class="parent-org-dropdown" id="parentOrgDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 4px 8px rgba(0,0,0,.1);z-index:10;">
+        <div class="org-tree-picker" id="newOrgParentPicker">
+          <div class="otp-search">
+            <input type="text" id="newOrgParentInput" class="otp-search-input" placeholder="搜索上级组织，下拉单选" oninput="singleOtpFilter('newOrgParentPicker')" onfocus="singleOtpOpen('newOrgParentPicker')" autocomplete="off">
+            <input type="hidden" id="newOrgParent" value="">
+            <span class="otp-search-icon">▾</span>
           </div>
+          <div class="otp-panel" onclick="event.stopPropagation()"></div>
         </div>
       </div>
       <div class="form-group" id="orgLevelHint" style="display:none;">
@@ -436,7 +435,6 @@
         <div class="form-group"><label>负责人姓名 <span class="required">*</span></label><input type="text" id="newOrgLeader" placeholder="请输入负责人姓名" required></div>
         <div class="form-group"><label>负责人手机号 <span class="required">*</span></label><input type="tel" id="newOrgPhone" placeholder="请输入手机号" required></div>
       </div>
-      <div class="form-group"><label>组织地点</label><input type="text" id="newOrgLocation" placeholder="请输入组织所在地点（选填）"></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('createOrgModal')">取消</button><button type="submit" class="btn btn-primary">确认创建</button></div>
     </form>
@@ -451,12 +449,21 @@
     <input type="hidden" id="editOrgId">
     <div class="modal-body">
       <div class="form-group"><label>组织名称 <span class="required">*</span></label><input type="text" id="editOrgName" required></div>
-      <div class="form-group"><label>归属上级组织</label><select id="editOrgParent"></select></div>
+      <div class="form-group" id="editParentOrgGroup">
+        <label>归属上级组织</label>
+        <div class="org-tree-picker" id="editOrgParentPicker">
+          <div class="otp-search">
+            <input type="text" id="editOrgParentInput" class="otp-search-input" placeholder="搜索上级组织，下拉单选" oninput="singleOtpFilter('editOrgParentPicker')" onfocus="singleOtpOpen('editOrgParentPicker')" autocomplete="off">
+            <input type="hidden" id="editOrgParent" value="">
+            <span class="otp-search-icon">▾</span>
+          </div>
+          <div class="otp-panel" onclick="event.stopPropagation()"></div>
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label>负责人姓名 <span class="required">*</span></label><input type="text" id="editOrgLeader" required></div>
         <div class="form-group"><label>负责人手机号 <span class="required">*</span></label><input type="tel" id="editOrgPhone" required></div>
       </div>
-      <div class="form-group"><label>组织地点 <span class="required">*</span></label><input type="text" id="editOrgLocation" required></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn" onclick="closeModal('editOrgModal')">取消</button><button type="submit" class="btn btn-primary">保存修改</button></div>
     </form>
