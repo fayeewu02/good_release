@@ -828,16 +828,18 @@
 
 <!-- ===== 弹窗：批量导出二维码 ===== -->
 <div class="modal-overlay" id="exportQRModal">
-  <div class="modal" style="width:620px">
-    <div class="modal-header"><h3>批量导出邀请码</h3><button class="modal-close" onclick="closeModal('exportQRModal')">✕</button></div>
-    <div class="modal-body">
+  <div class="modal" style="width:640px;max-height:88vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0"><h3>批量导出邀请码</h3><button class="modal-close" onclick="closeModal('exportQRModal')">✕</button></div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;min-height:0">
       <div class="form-group">
         <label>第一步：选择倡议（可多选）</label>
         <div style="position:relative" id="qrInitPickWrap">
           <input type="text" id="qrInitPickInput" placeholder="点击此处选择倡议，可多选..." style="width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;background:#fff" readonly onclick="openQRInitPicker(event)">
-          <!-- 下拉浮层：点击输入框时显示 -->
-          <div id="qrInitPickDropdown" class="qr-init-dropdown" style="display:none"></div>
+          <!-- 下拉浮层：点击输入框时显示，z-index 高于 otp-panel -->
+          <div id="qrInitPickDropdown" class="qr-init-dropdown" style="display:none;z-index:50"></div>
         </div>
+        <!-- 选倡议下拉展开时撑开容器，避免被 modal overflow 裁切 -->
+        <div id="qrInitPickSpacer" style="height:0;transition:height .15s"></div>
       </div>
 
       <div class="form-group">
@@ -851,7 +853,7 @@
         </div>
       </div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出</button></div>
+    <div class="modal-footer" style="flex-shrink:0"><button class="btn" onclick="closeModal('exportQRModal')">取消</button><button class="btn btn-primary" onclick="confirmExportInitQR()">导出</button></div>
   </div>
 </div>
 
@@ -1058,6 +1060,7 @@ let qrSelectedInits = new Set();
 function openQRInitPicker(e) {
   if (e) e.stopPropagation();
   const dropdown = document.getElementById('qrInitPickDropdown');
+  const spacer = document.getElementById('qrInitPickSpacer');
   const inits = DATA.initiatives.filter(i => !i.isDraft);
   if (inits.length === 0) {
     dropdown.innerHTML = `<div class="qr-init-empty">暂无可选倡议</div>`;
@@ -1070,6 +1073,7 @@ function openQRInitPicker(e) {
       </label>`).join('');
   }
   dropdown.style.display = 'block';
+  if (spacer) spacer.style.height = '220px';
 }
 function toggleQRInit(id, checked) {
   if (checked) qrSelectedInits.add(id); else qrSelectedInits.delete(id);
@@ -1090,7 +1094,11 @@ document.addEventListener('click', e => {
   const dd = document.getElementById('qrInitPickDropdown');
   const wrap = document.getElementById('qrInitPickWrap');
   if (!dd || !wrap) return;
-  if (!wrap.contains(e.target)) dd.style.display = 'none';
+  if (!wrap.contains(e.target)) {
+    dd.style.display = 'none';
+    const spacer = document.getElementById('qrInitPickSpacer');
+    if (spacer) spacer.style.height = '0';
+  }
 });
 
 // ===== 批量地点 Excel 上传 =====
