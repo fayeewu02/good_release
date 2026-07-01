@@ -993,6 +993,8 @@ function openExportOrgModal() {
     otpRender(picker);
     picker.dataset.initialized = '1';
     otpCheckAll('exportOrgPicker');
+    // 打开弹窗时默认展开下拉面板
+    picker.classList.add('open');
   }
   openModal('exportOrgModal');
 }
