@@ -322,6 +322,33 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 .form-group{margin-bottom:14px}
 .form-group label{display:block;font-size:13px;font-weight:500;margin-bottom:4px;color:var(--text)}
+
+/* ===== 分步发起弹窗 ===== */
+.init-steps{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);background:#FAFAFA;gap:0}
+.init-step{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-hint);flex:1;position:relative}
+.init-step:last-child{flex:none}
+.init-step-num{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:var(--text-hint)}
+.init-step.active .init-step-num{background:var(--primary);border-color:var(--primary);color:#fff}
+.init-step.done .init-step-num{background:var(--green);border-color:var(--green);color:#fff}
+.init-step.active .init-step-label{color:var(--text);font-weight:500}
+.init-step.done .init-step-label{color:var(--green)}
+.init-step-line{flex:1;height:1.5px;background:var(--border);margin:0 8px}
+.init-step-line.done{background:var(--green)}
+.init-step-page{display:none}
+.init-step-page.active{display:block}
+
+/* 情况一 step1：左右布局（填写 + C端示意图） */
+.init-form-with-preview{display:grid;grid-template-columns:1fr 180px;gap:20px;align-items:start}
+.init-c-preview{display:flex;flex-direction:column;gap:8px}
+.init-c-preview-item{border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.init-c-preview-item img{width:100%;display:block;border-radius:8px}
+.init-c-preview-label{font-size:11px;color:var(--text-hint);text-align:center;margin-top:2px}
+
+/* step最后页：成功状态 */
+.init-success-step{text-align:center;padding:24px 0 8px}
+.init-success-step .success-icon{font-size:40px;margin-bottom:12px}
+.init-success-step h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.init-success-step p{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7}
 .form-group label .required{color:var(--primary);margin-left:2px}
 .form-group input,.form-group textarea,.form-group select{width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;outline:none;font-family:inherit}
 .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--primary)}

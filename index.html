@@ -528,35 +528,79 @@
   </div>
 </div>
 
-<!-- ===== 弹窗：批量发起倡议 ===== -->
+<!-- ===== 弹窗：分步发起倡议 ===== -->
 <div class="modal-overlay" id="createInitModal">
-  <div class="modal" style="width:640px">
-    <div class="modal-header"><h3 id="createInitModalTitle">发起倡议</h3><button class="modal-close" onclick="closeModal('createInitModal')">✕</button></div>
-    <form id="createInitForm" onsubmit="event.preventDefault();submitCreateInit()">
-    <input type="hidden" id="createInitEditId">
-    <div class="modal-body">
-      <!-- 批量发起开关：置顶 -->
-      <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;background:#FAFAFA;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
-        <label style="font-size:13px;font-weight:500;margin-bottom:0">批量发起倡议（向多个组织一次性发起）</label>
-        <label class="switch"><input type="checkbox" id="batchSwitch" onchange="toggleBatchOrg()"><span class="slider"></span></label>
-      </div>
+  <div class="modal" style="width:760px;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <h3>发起倡议</h3>
+      <button class="modal-close" onclick="closeModal('createInitModal')">✕</button>
+    </div>
 
-      <!-- 下级自定义倡议开关：仅批量开启时出现 -->
-      <div class="form-group" id="customByChildSection" style="display:none;align-items:center;justify-content:space-between;background:#FFF7E6;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px">
-        <div>
-          <label style="font-size:13px;font-weight:500;margin-bottom:0;display:block">由下级组织自定义倡议内容</label>
-          <p style="font-size:11px;color:var(--text-hint);margin-top:3px;line-height:1.5">打开后无需填写统一的倡议内容和地址，由下级自行决定。</p>
+    <!-- 步骤条 -->
+    <div id="initStepsBar" style="flex-shrink:0"></div>
+
+    <div class="modal-body" style="flex:1;overflow-y:auto;min-height:0;padding:0">
+      <input type="hidden" id="createInitEditId">
+
+      <!-- ===== 情况一（仅本级）===== -->
+      <div id="initMode_solo">
+
+        <!-- 情况一 Step1: 填写倡议信息 -->
+        <div class="init-step-page" id="solo_step1" style="padding:20px">
+          <!-- 邀请参与组织开关 -->
+          <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;background:#FAFAFA;padding:10px 14px;border-radius:var(--radius);margin-bottom:18px">
+            <label style="font-size:13px;font-weight:500;margin-bottom:0">邀请参与组织发起倡议（向多个组织一次性发起）</label>
+            <label class="switch"><input type="checkbox" id="batchSwitch" onchange="initSwitchBatchMode()"><span class="slider"></span></label>
+          </div>
+          <!-- 左右布局：表单 + C端示意图 -->
+          <div class="init-form-with-preview">
+            <div>
+              <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="createInitTitle" placeholder="请输入倡议内容"></div>
+              <div class="form-group"><label>活动地址</label><input type="text" id="createInitLocation" placeholder="请输入活动地址（选填）"></div>
+            </div>
+            <!-- C端展示示意图 -->
+            <div class="init-c-preview">
+              <div class="init-c-preview-item">
+                <img src="https://placehold.co/180x240/FFF0E8/E84C3D?text=倡议内容%0A展示位置" alt="倡议内容在C端展示位置示意" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <div style="display:none;background:#FFF0E8;border-radius:8px;padding:16px 10px;text-align:center">
+                  <div style="font-size:11px;font-weight:600;color:#E84C3D;margin-bottom:4px">📱 倡议内容</div>
+                  <div style="font-size:10px;color:#999;line-height:1.5">展示在 C 端倡议页<br>标题位置</div>
+                </div>
+              </div>
+              <div class="init-c-preview-label">↑ 倡议内容展示位置</div>
+              <div class="init-c-preview-item">
+                <img src="https://placehold.co/180x200/E8F4FF/1677FF?text=活动地址%0A展示位置" alt="活动地址在C端展示位置示意" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <div style="display:none;background:#E8F4FF;border-radius:8px;padding:16px 10px;text-align:center">
+                  <div style="font-size:11px;font-weight:600;color:#1677FF;margin-bottom:4px">📍 活动地址</div>
+                  <div style="font-size:10px;color:#999;line-height:1.5">展示在 C 端倡议页<br>地址位置</div>
+                </div>
+              </div>
+              <div class="init-c-preview-label">↑ 活动地址展示位置</div>
+            </div>
+          </div>
         </div>
-        <label class="switch"><input type="checkbox" id="customByChildSwitch" onchange="toggleCustomByChild()"><span class="slider"></span></label>
+
+        <!-- 情况一 Step2: 发起成功 + 导出邀请码 -->
+        <div class="init-step-page" id="solo_step2" style="padding:20px">
+          <div class="init-success-step">
+            <div class="success-icon">🎉</div>
+            <h3>倡议发起成功！</h3>
+            <p>请导出发起倡议邀请码，分享给参与者<br>参与者扫码即可完成倡议发起</p>
+            <div style="display:flex;gap:10px;justify-content:center">
+              <button class="btn btn-primary" onclick="handleSoloExportQR()">导出邀请码</button>
+              <button class="btn" onclick="closeModal('createInitModal')">完成</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- A: 统一倡议（默认）— 倡议内容 + 活动地址 -->
-      <div id="unifiedContentBlock">
-        <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="createInitTitle" placeholder="请输入倡议内容"></div>
-        <div class="form-group"><label>活动地址</label><input type="text" id="createInitLocation" placeholder="请输入活动地址（选填）"></div>
-        <!-- 批量勾选层级：仅在批量发起开启时展示 -->
-        <div id="batchOrgSection" style="display:none">
-          <div class="form-group"><label>选择发起组织</label>
+      <!-- ===== 情况二（批量邀请参与组织）===== -->
+      <div id="initMode_batch" style="display:none">
+
+        <!-- 情况二 Step1: 选择参与组织 -->
+        <div class="init-step-page" id="batch_step1" style="padding:20px">
+          <div class="form-group">
+            <label>选择参与组织 <span class="required">*</span></label>
             <div class="org-tree-picker" id="batchOrgPicker">
               <div class="otp-search">
                 <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
@@ -566,29 +610,77 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- B: 下级自定义 — 仅备注 + 层级勾选 -->
-      <div id="customByChildBlock" style="display:none">
-        <div class="form-group">
-          <label>备注 <span style="font-weight:400;color:var(--text-hint);font-size:12px">（仅方便本级管理，非倡议内容）</span></label>
-          <input type="text" id="createInitRemark" placeholder="请输入备注">
-        </div>
-        <div class="form-group"><label>选择发起组织</label>
-          <div class="org-tree-picker" id="customOrgPicker">
-            <div class="otp-search">
-              <input type="text" class="otp-search-input" placeholder="搜索组织名称，下拉选择" oninput="otpFilter(this.closest('.org-tree-picker'))" onfocus="otpOpen(this.closest('.org-tree-picker'))" autocomplete="off">
-              <span class="otp-search-icon">▾</span>
+        <!-- 情况二 Step2: 填写倡议信息 -->
+        <div class="init-step-page" id="batch_step2" style="padding:20px">
+          <!-- 由参与组织自定义内容开关 -->
+          <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;background:#FAFAFA;padding:10px 14px;border-radius:var(--radius);margin-bottom:18px">
+            <div>
+              <label style="font-size:13px;font-weight:500;margin-bottom:0;display:block">由参与组织自定义倡议内容</label>
+              <p style="font-size:11px;color:var(--text-hint);margin-top:2px;margin-bottom:0;line-height:1.5">打开后无需填写统一的倡议内容和地址，由下级自行决定。</p>
             </div>
-            <div class="otp-panel" onclick="event.stopPropagation()"></div>
+            <label class="switch"><input type="checkbox" id="customByChildSwitch" onchange="initSwitchCustomMode()"><span class="slider"></span></label>
+          </div>
+
+          <!-- A: 统一填写内容（默认）+ C端示意图 -->
+          <div id="batchUnifiedBlock">
+            <div class="init-form-with-preview">
+              <div>
+                <div class="form-group"><label>倡议内容 <span class="required">*</span></label><input type="text" id="batchInitTitle" placeholder="请输入倡议内容"></div>
+                <div class="form-group"><label>活动地址</label><input type="text" id="batchInitLocation" placeholder="请输入活动地址（选填）"></div>
+              </div>
+              <div class="init-c-preview">
+                <div class="init-c-preview-item">
+                  <img src="https://placehold.co/180x240/FFF0E8/E84C3D?text=倡议内容%0A展示位置" alt="倡议内容展示位置" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                  <div style="display:none;background:#FFF0E8;border-radius:8px;padding:16px 10px;text-align:center">
+                    <div style="font-size:11px;font-weight:600;color:#E84C3D;margin-bottom:4px">📱 倡议内容</div>
+                    <div style="font-size:10px;color:#999;line-height:1.5">展示在 C 端倡议页<br>标题位置</div>
+                  </div>
+                </div>
+                <div class="init-c-preview-label">↑ 倡议内容展示位置</div>
+                <div class="init-c-preview-item">
+                  <img src="https://placehold.co/180x200/E8F4FF/1677FF?text=活动地址%0A展示位置" alt="活动地址展示位置" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                  <div style="display:none;background:#E8F4FF;border-radius:8px;padding:16px 10px;text-align:center">
+                    <div style="font-size:11px;font-weight:600;color:#1677FF;margin-bottom:4px">📍 活动地址</div>
+                    <div style="font-size:10px;color:#999;line-height:1.5">展示在 C 端倡议页<br>地址位置</div>
+                  </div>
+                </div>
+                <div class="init-c-preview-label">↑ 活动地址展示位置</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: 下级自定义模式 — 只填备注 -->
+          <div id="batchCustomBlock" style="display:none">
+            <div class="form-group">
+              <label>备注 <span style="font-weight:400;color:var(--text-hint);font-size:12px">（仅方便本级管理，非倡议内容）</span></label>
+              <input type="text" id="createInitRemark" placeholder="请输入备注">
+            </div>
+          </div>
+        </div>
+
+        <!-- 情况二 Step3: 发起成功 + 导出邀请码 -->
+        <div class="init-step-page" id="batch_step3" style="padding:20px">
+          <div class="init-success-step">
+            <div class="success-icon">🎉</div>
+            <h3>倡议发起成功！</h3>
+            <p id="batchSuccessDesc">已向 <strong id="batchSuccessOrgCount">0</strong> 个参与组织发起倡议<br>请导出发起倡议邀请码，分享给各参与组织</p>
+            <div style="display:flex;gap:10px;justify-content:center">
+              <button class="btn btn-primary" onclick="handleBatchExportQR()">导出邀请码</button>
+              <button class="btn" onclick="closeModal('createInitModal')">完成</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-primary">确认发起</button>
+
+    <!-- 底部按钮栏 -->
+    <div class="modal-footer" style="flex-shrink:0" id="initModalFooter">
+      <button class="btn" id="initBtnPrev" style="display:none" onclick="initStepPrev()">上一步</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closeModal('createInitModal')">取消</button>
+      <button class="btn btn-primary" id="initBtnNext" onclick="initStepNext()">下一步</button>
     </div>
-    </form>
   </div>
 </div>
 

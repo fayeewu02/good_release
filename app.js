@@ -1335,93 +1335,168 @@ function renderDrafts() {
   // 草稿箱已下线
 }
 
+// ========== 分步发起倡议 ==========
+let _initStep = 1;   // 当前步骤
+let _initIsBatch = false;  // 是否批量模式
+
+const SOLO_STEPS = ['填写倡议信息', '导出发起倡议邀请码'];
+const BATCH_STEPS = ['选择参与组织', '填写倡议信息', '导出发起倡议邀请码'];
+
+function renderInitStepsBar() {
+  const bar = document.getElementById('initStepsBar');
+  if (!bar) return;
+  const steps = _initIsBatch ? BATCH_STEPS : SOLO_STEPS;
+  let html = '<div class="init-steps">';
+  steps.forEach((label, i) => {
+    const idx = i + 1;
+    const cls = idx < _initStep ? 'done' : (idx === _initStep ? 'active' : '');
+    const numContent = idx < _initStep ? '✓' : idx;
+    html += `<div class="init-step ${cls}">
+      <div class="init-step-num">${numContent}</div>
+      <span class="init-step-label">${label}</span>
+    </div>`;
+    if (i < steps.length - 1) {
+      html += `<div class="init-step-line ${idx < _initStep ? 'done' : ''}"></div>`;
+    }
+  });
+  html += '</div>';
+  bar.innerHTML = html;
+}
+
+function renderInitStepPage() {
+  // 隐藏所有 step page
+  document.querySelectorAll('#createInitModal .init-step-page').forEach(p => p.classList.remove('active'));
+  if (_initIsBatch) {
+    const page = document.getElementById(`batch_step${_initStep}`);
+    if (page) page.classList.add('active');
+  } else {
+    const page = document.getElementById(`solo_step${_initStep}`);
+    if (page) page.classList.add('active');
+  }
+  // 更新底部按钮
+  const totalSteps = _initIsBatch ? 3 : 2;
+  const isLastStep = _initStep === totalSteps;
+  document.getElementById('initBtnPrev').style.display = _initStep > 1 ? 'inline-flex' : 'none';
+  document.getElementById('initBtnNext').style.display = isLastStep ? 'none' : 'inline-flex';
+  document.getElementById('initBtnNext').textContent = _initStep === totalSteps - 1 ? '确认发起' : '下一步';
+}
+
 function openCreateInitModal() {
-  document.getElementById('createInitForm').reset();
+  _initStep = 1;
+  _initIsBatch = false;
+
+  // 重置表单
+  document.getElementById('createInitTitle').value = '';
+  document.getElementById('createInitLocation').value = '';
   document.getElementById('createInitEditId').value = '';
-  document.getElementById('createInitModalTitle').textContent = '发起倡议';
   document.getElementById('batchSwitch').checked = false;
-  document.getElementById('batchOrgSection').style.display = 'none';
-  document.getElementById('customByChildSection').style.display = 'none';
   document.getElementById('customByChildSwitch').checked = false;
-  document.getElementById('customByChildBlock').style.display = 'none';
-  document.getElementById('unifiedContentBlock').style.display = 'block';
-  // 备注默认值：MMDD + 自定义倡议
-  const d = new Date();
-  const md = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
   const rk = document.getElementById('createInitRemark');
-  if (rk) rk.value = md + '自定义倡议';
+  if (rk) {
+    const d = new Date();
+    const md = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    rk.value = md + '自定义倡议';
+  }
+  // 显示仅本级模式
+  document.getElementById('initMode_solo').style.display = 'block';
+  document.getElementById('initMode_batch').style.display = 'none';
+  document.getElementById('batchUnifiedBlock').style.display = 'block';
+  document.getElementById('batchCustomBlock').style.display = 'none';
+
+  renderInitStepsBar();
+  renderInitStepPage();
   openModal('createInitModal');
 }
 
-function toggleBatchOrg() {
-  const on = document.getElementById('batchSwitch').checked;
-  document.getElementById('batchOrgSection').style.display = on ? 'block' : 'none';
-  document.getElementById('customByChildSection').style.display = on ? 'flex' : 'none';
-  if (on) {
-    // 首次开启时初始化 picker
+function initSwitchBatchMode() {
+  _initIsBatch = document.getElementById('batchSwitch').checked;
+  _initStep = 1;
+  document.getElementById('initMode_solo').style.display = _initIsBatch ? 'none' : 'block';
+  document.getElementById('initMode_batch').style.display = _initIsBatch ? 'block' : 'none';
+  if (_initIsBatch) {
+    // 初始化组织选择器
     const p = document.getElementById('batchOrgPicker');
-    if (p && !p.dataset.initialized) {
+    if (p) {
+      delete p.dataset.initialized;
       otpRender(p);
       p.dataset.initialized = '1';
       otpCheckAll('batchOrgPicker');
     }
   }
-  if (!on) {
-    // 关闭批量时，也强制关闭自定义
-    document.getElementById('customByChildSwitch').checked = false;
-    document.getElementById('customByChildBlock').style.display = 'none';
-    document.getElementById('unifiedContentBlock').style.display = 'block';
+  renderInitStepsBar();
+  renderInitStepPage();
+}
+
+function initSwitchCustomMode() {
+  const on = document.getElementById('customByChildSwitch').checked;
+  document.getElementById('batchUnifiedBlock').style.display = on ? 'none' : 'block';
+  document.getElementById('batchCustomBlock').style.display = on ? 'block' : 'none';
+}
+
+function initStepNext() {
+  const totalSteps = _initIsBatch ? 3 : 2;
+  if (_initStep < totalSteps) {
+    // 验证当前步骤
+    if (!initValidateCurrentStep()) return;
+    if (_initStep === totalSteps - 1) {
+      // 最后一步前提交数据
+      if (!initSubmitData()) return;
+    }
+    _initStep++;
+    renderInitStepsBar();
+    renderInitStepPage();
   }
 }
 
-// 下级自定义倡议开关
-function toggleCustomByChild() {
-  const on = document.getElementById('customByChildSwitch').checked;
-  document.getElementById('customByChildBlock').style.display = on ? 'block' : 'none';
-  document.getElementById('unifiedContentBlock').style.display = on ? 'none' : 'block';
-  if (on) {
-    const picker = document.getElementById('customOrgPicker');
-    if (picker) {
-      delete picker.dataset.initialized;
-      otpRender(picker);
-      picker.dataset.initialized = '1';
-      otpCheckAll('customOrgPicker');
+function initStepPrev() {
+  if (_initStep > 1) {
+    _initStep--;
+    renderInitStepsBar();
+    renderInitStepPage();
+  }
+}
+
+function initValidateCurrentStep() {
+  if (!_initIsBatch) {
+    if (_initStep === 1) {
+      const title = document.getElementById('createInitTitle').value.trim();
+      if (!title) { showToast('请填写倡议内容'); return false; }
+    }
+  } else {
+    if (_initStep === 1) {
+      const orgIds = otpGetCheckedIds('batchOrgPicker');
+      if (orgIds.length === 0) { showToast('请至少选择一个参与组织'); return false; }
+    }
+    if (_initStep === 2) {
+      const isCustom = document.getElementById('customByChildSwitch').checked;
+      if (!isCustom) {
+        const title = document.getElementById('batchInitTitle').value.trim();
+        if (!title) { showToast('请填写倡议内容'); return false; }
+      }
     }
   }
+  return true;
 }
 
-function handleCoverUpload(input) {
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById('coverPreview').innerHTML = `<img src="${e.target.result}">`;
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-}
-
-function submitCreateInit() {
-  const isBatch = document.getElementById('batchSwitch').checked;
-  const isCustomByChild = isBatch && document.getElementById('customByChildSwitch').checked;
+function initSubmitData() {
+  const isCustomByChild = _initIsBatch && document.getElementById('customByChildSwitch').checked;
+  const title = _initIsBatch
+    ? (document.getElementById('batchInitTitle')?.value?.trim() || '')
+    : (document.getElementById('createInitTitle')?.value?.trim() || '');
+  const location = _initIsBatch
+    ? (document.getElementById('batchInitLocation')?.value?.trim() || '')
+    : (document.getElementById('createInitLocation')?.value?.trim() || '');
   const remark = document.getElementById('createInitRemark')?.value?.trim() || '';
-  const title = document.getElementById('createInitTitle').value.trim();
-  const location = document.getElementById('createInitLocation')?.value?.trim() || '';
-  if (!isCustomByChild && !title) { showToast('请填写倡议内容'); return; }
-  if (isCustomByChild && !remark) { showToast('请填写备注'); return; }
-
-  const editId = document.getElementById('createInitEditId').value;
-  const colors = ['linear-gradient(135deg,#06B57A,#34D399)','linear-gradient(135deg,#FF8C42,#FBBF24)','linear-gradient(135deg,#4A90D9,#60A5FA)','linear-gradient(135deg,#9B59B6,#8E44AD)','linear-gradient(135deg,#E67E22,#F39C12)','linear-gradient(135deg,#1ABC9C,#16A085)'];
-
-  let checkedOrgsArr;
-  if (isCustomByChild) {
-    checkedOrgsArr = otpGetCheckedOrgs('customOrgPicker');
-  } else if (isBatch) {
-    checkedOrgsArr = otpGetCheckedOrgs('batchOrgPicker');
-  } else {
-    checkedOrgsArr = [];
-  }
-  const orgCount = isBatch ? checkedOrgsArr.length : 1;
   const finalTitle = isCustomByChild ? remark : title;
+
+  let checkedOrgsArr = [];
+  if (_initIsBatch) {
+    checkedOrgsArr = otpGetCheckedOrgs('batchOrgPicker');
+  }
+  const orgCount = _initIsBatch ? checkedOrgsArr.length : 1;
+
+  const colors = ['linear-gradient(135deg,#06B57A,#34D399)','linear-gradient(135deg,#FF8C42,#FBBF24)','linear-gradient(135deg,#4A90D9,#60A5FA)','linear-gradient(135deg,#9B59B6,#8E44AD)','linear-gradient(135deg,#E67E22,#F39C12)','linear-gradient(135deg,#1ABC9C,#16A085)'];
+  const editId = document.getElementById('createInitEditId').value;
 
   if (editId) {
     const existing = DATA.initiatives.find(i => i.id === parseInt(editId));
@@ -1448,18 +1523,31 @@ function submitCreateInit() {
       isDraft: false
     });
   }
-  closeModal('createInitModal');
-  if (isBatch && orgCount > 0) {
-    const orgNames = checkedOrgsArr.map(o => o.name);
-    lastBatchInit = { title: finalTitle, orgCount, orgNames };
-    document.getElementById('successOrgCount').textContent = orgCount;
-    document.getElementById('successInitTitle').textContent = finalTitle;
-    openModal('initSuccessModal');
-  } else {
-    showToast(`倡议「${finalTitle}」发起成功`);
-  }
+
+  // 更新批量成功页的组织数
+  const orgCountEl = document.getElementById('batchSuccessOrgCount');
+  if (orgCountEl) orgCountEl.textContent = orgCount;
+
   renderInitiatives();
+  return true;
 }
+
+function handleSoloExportQR() {
+  closeModal('createInitModal');
+  renderQRModal();
+  openModal('exportQRModal');
+}
+
+function handleBatchExportQR() {
+  closeModal('createInitModal');
+  renderQRModal();
+  openModal('exportQRModal');
+}
+
+// 兼容旧代码（已弃用）
+function submitCreateInit() {}
+function toggleBatchOrg() {}
+function toggleCustomByChild() {}
 
 function saveDraftInit() {
   // 草稿箱已下线，此函数保留为空桩
