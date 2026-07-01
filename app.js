@@ -3237,7 +3237,6 @@ document.addEventListener('click', function(e) {
     if (panel) panel.style.display = 'none';
   }
   const dcCascader = document.getElementById('dcCascader');
-  const dcCascader = document.getElementById('dcCascader');
   if (dcCascader && !dcCascader.contains(e.target)) {
     const panel = document.getElementById('dcCascaderPanel');
     if (panel) panel.style.display = 'none';
