@@ -792,7 +792,7 @@ function otpRender(picker) {
       <span>共 ${DATA.orgs.length} 个组织</span>
       <span>
         <a onclick="otpExpandAll(this)">展开全部</a>
-        <a onclick="otpClearAll(this)">清空</a>
+        <a onclick="otpClearAll(this)">清空筛选</a>
       </span>
     </div>`;
   const summaryHtml = `<div class="otp-summary">已选 <strong>${checkedCount}</strong> 个组织</div>`;
@@ -802,11 +802,6 @@ function otpRender(picker) {
     return;
   }
   panel.innerHTML = toolsHtml + roots.map(o => otpRenderNode(o, isVisible, 0, keyword)).join('') + summaryHtml;
-
-  // 初始化所有已渲染节点的 Actions
-  panel.querySelectorAll('.otp-node').forEach(nodeEl => {
-    otpUpdateNodeActions(nodeEl);
-  });
 }
 
 function otpRenderNode(org, isVisible, depth, keyword) {
@@ -816,82 +811,24 @@ function otpRenderNode(org, isVisible, depth, keyword) {
   const isExpanded = !!keyword && isVisible(org);
   const childrenHtml = (hasKids && isExpanded) ? `<div class="otp-children">${kids.filter(k => isVisible(k)).map(k => otpRenderNode(k, isVisible, depth + 1, keyword)).join('')}</div>` : '';
   return `
-    <div class="otp-node" data-org-id="${org.id}">
+    <div class="otp-node" data-org-id="${org.id}" onclick="otpNodeClick(this, event)">
       <span class="otp-toggle ${hasKids ? 'has-children' : 'empty'} ${isExpanded && hasKids ? 'expanded' : ''}" onclick="otpToggle(this,event)">${hasKids ? '▸' : ''}</span>
       <input type="checkbox" class="otp-checkbox" data-org-id="${org.id}" onchange="otpCheck(this)">
       <span class="layer-tag layer-${org.level}" style="font-size:10px;padding:0 4px;flex-shrink:0">${'一二三四五'[org.level-1]}级</span>
-      <span>${org.name}</span>
-      <span class="otp-actions" style="margin-left: 8px;"></span>
+      <span class="otp-node-name">${org.name}</span>
     </div>${childrenHtml}`;
 }
 
-function otpUpdateNodeActions(nodeEl) {
-  const actionsEl = nodeEl.querySelector('.otp-actions');
-  if (!actionsEl) return;
-  const cb = nodeEl.querySelector('.otp-checkbox');
-  const isChecked = cb && cb.checked;
-  const toggle = nodeEl.querySelector('.otp-toggle');
-  const hasKids = toggle && toggle.classList.contains('has-children');
-  if (!isChecked || !hasKids) {
-    actionsEl.innerHTML = '';
+function otpNodeClick(nodeEl, ev) {
+  // 如果点击的是 checkbox，或者是 toggle 按钮本身，不要重复处理
+  if (ev.target.classList.contains('otp-checkbox') || ev.target.classList.contains('otp-toggle')) {
     return;
   }
-  const isOnlySelf = nodeEl.dataset.onlySelf === "true";
-  if (isOnlySelf) {
-    actionsEl.innerHTML = `<a class="otp-action-link" onclick="otpSetOnlySelf('${nodeEl.dataset.orgId}', false, event)" style="color: var(--primary); font-size: 11px; margin-left: 6px; cursor: pointer; text-decoration: underline;">[连同下级]</a>`;
-  } else {
-    actionsEl.innerHTML = `<a class="otp-action-link" onclick="otpSetOnlySelf('${nodeEl.dataset.orgId}', true, event)" style="color: var(--text-hint); font-size: 11px; margin-left: 6px; cursor: pointer; text-decoration: underline;">[仅选本级]</a>`;
+  // 否则，点击行内的其他地方（如文字、标签）触发展开/收起下级
+  const toggle = nodeEl.querySelector('.otp-toggle');
+  if (toggle && toggle.classList.contains('has-children')) {
+    otpToggle(toggle, ev);
   }
-}
-
-function otpSetOnlySelf(orgId, onlySelfFlag, ev) {
-  ev.stopPropagation();
-  ev.preventDefault();
-  const org = DATA.orgs.find(o => o.id === orgId);
-  if (!org) return;
-  const picker = document.querySelector(`.otp-node[data-org-id="${orgId}"]`).closest('.org-tree-picker');
-  const node = picker.querySelector(`.otp-node[data-org-id="${orgId}"]`);
-  if (!node) return;
-
-  if (onlySelfFlag) {
-    node.dataset.onlySelf = "true";
-    // 递归取消所有已渲染子孙的勾选
-    const uncheckDescendants = (parentOrg) => {
-      const kids = DATA.orgs.filter(o => o.level === parentOrg.level + 1 && (o.parents || []).length === parentOrg.level && (o.parents || [])[parentOrg.level - 1] === parentOrg.name);
-      kids.forEach(k => {
-        const kidNode = picker.querySelector(`.otp-node[data-org-id="${k.id}"]`);
-        const kidCb = picker.querySelector(`.otp-checkbox[data-org-id="${k.id}"]`);
-        if (kidCb) {
-          kidCb.checked = false;
-          if (kidNode) delete kidNode.dataset.onlySelf; // 子级不再是仅本级
-          uncheckDescendants(k);
-        }
-      });
-    };
-    uncheckDescendants(org);
-  } else {
-    delete node.dataset.onlySelf;
-    // 递归勾选所有已渲染子孙
-    const checkDescendants = (parentOrg) => {
-      const kids = DATA.orgs.filter(o => o.level === parentOrg.level + 1 && (o.parents || []).length === parentOrg.level && (o.parents || [])[parentOrg.level - 1] === parentOrg.name);
-      kids.forEach(k => {
-        const kidCb = picker.querySelector(`.otp-checkbox[data-org-id="${k.id}"]`);
-        if (kidCb) {
-          kidCb.checked = true;
-          checkDescendants(k);
-        }
-      });
-    };
-    checkDescendants(org);
-  }
-
-  // 刷新整棵树所有显示节点的 Actions 状态
-  picker.querySelectorAll('.otp-node').forEach(n => {
-    otpUpdateNodeActions(n);
-  });
-
-  // 更新 summary
-  otpUpdateSummary(picker);
 }
 
 function otpToggle(toggleEl, ev) {
@@ -915,20 +852,14 @@ function otpToggle(toggleEl, ev) {
     node.after(wrap);
     toggleEl.classList.add('expanded');
 
-    // 级联继承：检查父级勾选状态与 dataset.onlySelf，决定是否自动勾选新展开的子级
+    // 级联继承：检查父级勾选状态，决定是否自动勾选新展开的子级
     const parentCb = node.querySelector('.otp-checkbox');
     const parentChecked = parentCb ? parentCb.checked : false;
-    const isOnlySelf = node.dataset.onlySelf === "true";
-    if (parentChecked && !isOnlySelf) {
+    if (parentChecked) {
       wrap.querySelectorAll('.otp-checkbox').forEach(cb => {
         cb.checked = true;
       });
     }
-
-    // 更新新生成的这些子节点的 Actions 以及重新给它们渲染动作
-    wrap.querySelectorAll('.otp-node').forEach(n => {
-      otpUpdateNodeActions(n);
-    });
   }
 }
 
@@ -939,32 +870,19 @@ function otpCheck(cb) {
   if (!org) return;
   const checked = cb.checked;
 
-  if (checked) {
-    delete node.dataset.onlySelf;
-  } else {
-    delete node.dataset.onlySelf;
-  }
-
   // 父级勾选 → 所有已渲染子孙自动勾选；父级取消 → 所有已渲染子孙自动取消
   const picker = cb.closest('.org-tree-picker');
   const toggleDescendants = (parentOrg, flag) => {
     const kids = DATA.orgs.filter(o => o.level === parentOrg.level + 1 && (o.parents || []).length === parentOrg.level && (o.parents || [])[parentOrg.level - 1] === parentOrg.name);
     kids.forEach(k => {
-      const kidNode = picker.querySelector(`.otp-node[data-org-id="${k.id}"]`);
       const kidCb = picker.querySelector(`.otp-checkbox[data-org-id="${k.id}"]`);
       if (kidCb) {
         kidCb.checked = flag;
-        if (kidNode) delete kidNode.dataset.onlySelf;
         toggleDescendants(k, flag);
       }
     });
   };
   toggleDescendants(org, checked);
-
-  // 更新本节点及整棵树上所有节点的 Actions
-  picker.querySelectorAll('.otp-node').forEach(n => {
-    otpUpdateNodeActions(n);
-  });
 
   // 更新 summary
   otpUpdateSummary(picker);
@@ -1014,22 +932,12 @@ function otpExpandAll(toolsA) {
     }
   });
 
-  // 刷新所有节点状态
-  picker.querySelectorAll('.otp-node').forEach(n => {
-    otpUpdateNodeActions(n);
-  });
   otpUpdateSummary(picker);
 }
 
 function otpClearAll(toolsA) {
   const picker = toolsA.closest('.org-tree-picker');
-  picker.querySelectorAll('.otp-node').forEach(node => {
-    delete node.dataset.onlySelf;
-  });
   picker.querySelectorAll('.otp-checkbox').forEach(cb => cb.checked = false);
-  picker.querySelectorAll('.otp-node').forEach(n => {
-    otpUpdateNodeActions(n);
-  });
   otpUpdateSummary(picker);
 }
 

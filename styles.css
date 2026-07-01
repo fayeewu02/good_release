@@ -356,7 +356,7 @@ html,body{height:100%;font-family:'Noto Sans SC',-apple-system,sans-serif;backgr
 .org-tree-picker .otp-tools a{color:var(--primary);cursor:pointer;margin-left:10px}
 .org-tree-picker .otp-node{display:flex;align-items:center;gap:4px;padding:3px 8px;font-size:12px;cursor:pointer;border-radius:2px;line-height:1.6;user-select:none}
 .org-tree-picker .otp-node:hover{background:var(--primary-light)}
-.org-tree-picker .otp-toggle{width:14px;flex-shrink:0;text-align:center;color:var(--text-hint);font-size:10px;line-height:1;cursor:pointer;transition:transform .15s}
+.org-tree-picker .otp-toggle{width:18px;flex-shrink:0;text-align:center;color:var(--text-hint);font-size:15px;line-height:1;cursor:pointer;transition:transform .15s}
 .org-tree-picker .otp-toggle.has-children{cursor:pointer}
 .org-tree-picker .otp-toggle.empty{visibility:hidden}
 .org-tree-picker .otp-toggle.expanded{transform:rotate(90deg)}
